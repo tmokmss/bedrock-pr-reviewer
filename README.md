@@ -36,8 +36,7 @@ pull request and review comments
   process or even change the review objective.
 
 To use this tool, you need to add the provided YAML file to your repository and
-configure the required environment variables, such as `GITHUB_TOKEN` and
-`OPENAI_API_KEY`. For more information on usage, examples, contributing, and
+configure the required IAM role. For more information on usage, examples, contributing, and
 FAQs, you can refer to the sections below.
 
 - [Overview](#overview)
@@ -49,18 +48,11 @@ FAQs, you can refer to the sections below.
 - [Contribute](#contribute)
 - [FAQs](#faqs)
 
-## CodeRabbit Pro
-
-The professional version of `openai-pr-reviewer` project is now available at
-[coderabbit.ai](http://coderabbit.ai). Building upon our open source foundation,
-CodeRabbit Pro offers premium features including enhanced context and superior
-noise reduction, dedicated support, and our ongoing commitment to improve code
-reviews. Moreover, CodeRabbit Pro is free for open source projects.
-
 ## Install instructions
 
-`ai-pr-reviewer` runs as a GitHub Action. Add the below file to your repository
-at `.github/workflows/ai-pr-reviewer.yml`
+You have to create an IAM role first for authenticating Bedrock API. You can use [the CloudFormation template](docs/oidc-cfn.yaml) to create one.
+
+`ai-pr-reviewer` runs as a GitHub Action. Add the below file to your repository at `.github/workflows/ai-pr-reviewer.yml`.
 
 ```yaml
 name: Code Review
