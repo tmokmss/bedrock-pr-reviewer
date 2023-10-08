@@ -1,8 +1,8 @@
 {
-  "name": "openai-pr-reviewer",
+  "name": "bedrock-pr-reviewer",
   "version": "0.0.0",
   "private": true,
-  "description": "OpenAI-based PR Reviewer and Summarizer.",
+  "description": "Bedrock-based PR Reviewer and Summarizer.",
   "main": "lib/main.js",
   "scripts": {
     "build": "cp node_modules/@dqbd/tiktoken/tiktoken_bg.wasm dist/tiktoken_bg.wasm && tsc",
@@ -13,10 +13,6 @@
     "lint": "eslint src/**/*.ts",
     "test": "jest",
     "all": "npm run build && npm run format && npm run lint && npm run package && npm test"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/fluxninja/openai-pr-reviewer.git"
   },
   "keywords": [
     "actions",

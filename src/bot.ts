@@ -69,7 +69,7 @@ export class Bot {
             })
           ),
         {
-          retries: this.options.openaiRetries
+          retries: this.options.bedrockRetries
         }
       )
     } catch (e: unknown) {
@@ -87,14 +87,14 @@ export class Bot {
         Buffer.from(response.body).toString('utf-8')
       ).completion
     } else {
-      warning('openai response is null')
+      warning('bedrock response is null')
     }
     // remove the prefix "with " in the response
     if (responseText.startsWith('with ')) {
       responseText = responseText.substring(5)
     }
     if (this.options.debug) {
-      info(`openai responses: ${responseText}`)
+      info(`bedrock responses: ${responseText}`)
     }
     const newIds: Ids = {
       parentMessageId: response?.$metadata.requestId,

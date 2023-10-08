@@ -2324,7 +2324,7 @@ class Bot {
                 }),
                 contentType: 'application/json'
             })), {
-                retries: this.options.openaiRetries
+                retries: this.options.bedrockRetries
             });
         }
         catch (e) {
@@ -2338,14 +2338,14 @@ class Bot {
             responseText = JSON.parse(Buffer.from(response.body).toString('utf-8')).completion;
         }
         else {
-            (0,core.warning)('openai response is null');
+            (0,core.warning)('bedrock response is null');
         }
         // remove the prefix "with " in the response
         if (responseText.startsWith('with ')) {
             responseText = responseText.substring(5);
         }
         if (this.options.debug) {
-            (0,core.info)(`openai responses: ${responseText}`);
+            (0,core.info)(`bedrock responses: ${responseText}`);
         }
         const newIds = {
             parentMessageId: response?.$metadata.requestId,
@@ -3110,25 +3110,25 @@ __nccwpck_require__.r(__webpack_exports__);
 
 
 async function run() {
-    const options = new _options__WEBPACK_IMPORTED_MODULE_2__/* .Options */ .Ei((0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('debug'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('disable_review'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('disable_release_notes'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('max_files'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('review_simple_changes'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('review_comment_lgtm'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getMultilineInput)('path_filters'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('system_message'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('openai_light_model'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('openai_heavy_model'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('openai_model_temperature'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('openai_retries'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('openai_timeout_ms'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('openai_concurrency_limit'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('github_concurrency_limit'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('openai_base_url'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('language'));
+    const options = new _options__WEBPACK_IMPORTED_MODULE_2__/* .Options */ .Ei((0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('debug'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('disable_review'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('disable_release_notes'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('max_files'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('review_simple_changes'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('review_comment_lgtm'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getMultilineInput)('path_filters'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('system_message'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_light_model'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_heavy_model'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_model_temperature'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_retries'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_timeout_ms'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_concurrency_limit'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('github_concurrency_limit'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_base_url'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('language'));
     // print options
     options.print();
     const prompts = new _prompts__WEBPACK_IMPORTED_MODULE_5__/* .Prompts */ .j((0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('summarize'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('summarize_release_notes'));
     // Create two bots, one for summary and one for review
     let lightBot = null;
     try {
-        lightBot = new _bot__WEBPACK_IMPORTED_MODULE_1__/* .Bot */ .r(options, new _options__WEBPACK_IMPORTED_MODULE_2__/* .BedrockOptions */ .UT(options.openaiLightModel, options.lightTokenLimits));
+        lightBot = new _bot__WEBPACK_IMPORTED_MODULE_1__/* .Bot */ .r(options, new _options__WEBPACK_IMPORTED_MODULE_2__/* .BedrockOptions */ .UT(options.bedrockLightModel, options.lightTokenLimits));
     }
     catch (e) {
-        (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.warning)(`Skipped: failed to create summary bot, please check your openai_api_key: ${e}, backtrace: ${e.stack}`);
+        (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.warning)(`Skipped: failed to create summary bot, please check your bedrock_api_key: ${e}, backtrace: ${e.stack}`);
         return;
     }
     let heavyBot = null;
     try {
-        heavyBot = new _bot__WEBPACK_IMPORTED_MODULE_1__/* .Bot */ .r(options, new _options__WEBPACK_IMPORTED_MODULE_2__/* .BedrockOptions */ .UT(options.openaiHeavyModel, options.heavyTokenLimits));
+        heavyBot = new _bot__WEBPACK_IMPORTED_MODULE_1__/* .Bot */ .r(options, new _options__WEBPACK_IMPORTED_MODULE_2__/* .BedrockOptions */ .UT(options.bedrockHeavyModel, options.heavyTokenLimits));
     }
     catch (e) {
-        (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.warning)(`Skipped: failed to create review bot, please check your openai_api_key: ${e}, backtrace: ${e.stack}`);
+        (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.warning)(`Skipped: failed to create review bot, please check your bedrock_api_key: ${e}, backtrace: ${e.stack}`);
         return;
     }
     try {
@@ -5030,18 +5030,18 @@ class Options {
     reviewCommentLGTM;
     pathFilters;
     systemMessage;
-    openaiLightModel;
-    openaiHeavyModel;
-    openaiModelTemperature;
-    openaiRetries;
-    openaiTimeoutMS;
-    openaiConcurrencyLimit;
+    bedrockLightModel;
+    bedrockHeavyModel;
+    bedrockModelTemperature;
+    bedrockRetries;
+    bedrockTimeoutMS;
+    bedrockConcurrencyLimit;
     githubConcurrencyLimit;
     lightTokenLimits;
     heavyTokenLimits;
     apiBaseUrl;
     language;
-    constructor(debug, disableReview, disableReleaseNotes, maxFiles = '0', reviewSimpleChanges = false, reviewCommentLGTM = false, pathFilters = null, systemMessage = '', openaiLightModel = 'gpt-3.5-turbo', openaiHeavyModel = 'gpt-3.5-turbo', openaiModelTemperature = '0.0', openaiRetries = '3', openaiTimeoutMS = '120000', openaiConcurrencyLimit = '6', githubConcurrencyLimit = '6', apiBaseUrl = 'https://api.openai.com/v1', language = 'en-US') {
+    constructor(debug, disableReview, disableReleaseNotes, maxFiles = '0', reviewSimpleChanges = false, reviewCommentLGTM = false, pathFilters = null, systemMessage = '', bedrockLightModel = 'gpt-3.5-turbo', bedrockHeavyModel = 'gpt-3.5-turbo', bedrockModelTemperature = '0.0', bedrockRetries = '3', bedrockTimeoutMS = '120000', bedrockConcurrencyLimit = '6', githubConcurrencyLimit = '6', apiBaseUrl = 'https://api.bedrock.com/v1', language = 'en-US') {
         this.debug = debug;
         this.disableReview = disableReview;
         this.disableReleaseNotes = disableReleaseNotes;
@@ -5050,15 +5050,15 @@ class Options {
         this.reviewCommentLGTM = reviewCommentLGTM;
         this.pathFilters = new PathFilter(pathFilters);
         this.systemMessage = systemMessage;
-        this.openaiLightModel = openaiLightModel;
-        this.openaiHeavyModel = openaiHeavyModel;
-        this.openaiModelTemperature = parseFloat(openaiModelTemperature);
-        this.openaiRetries = parseInt(openaiRetries);
-        this.openaiTimeoutMS = parseInt(openaiTimeoutMS);
-        this.openaiConcurrencyLimit = parseInt(openaiConcurrencyLimit);
+        this.bedrockLightModel = bedrockLightModel;
+        this.bedrockHeavyModel = bedrockHeavyModel;
+        this.bedrockModelTemperature = parseFloat(bedrockModelTemperature);
+        this.bedrockRetries = parseInt(bedrockRetries);
+        this.bedrockTimeoutMS = parseInt(bedrockTimeoutMS);
+        this.bedrockConcurrencyLimit = parseInt(bedrockConcurrencyLimit);
         this.githubConcurrencyLimit = parseInt(githubConcurrencyLimit);
-        this.lightTokenLimits = new TokenLimits(openaiLightModel);
-        this.heavyTokenLimits = new TokenLimits(openaiHeavyModel);
+        this.lightTokenLimits = new TokenLimits(bedrockLightModel);
+        this.heavyTokenLimits = new TokenLimits(bedrockHeavyModel);
         this.apiBaseUrl = apiBaseUrl;
         this.language = language;
     }
@@ -5072,12 +5072,12 @@ class Options {
         (0,core.info)(`review_comment_lgtm: ${this.reviewCommentLGTM}`);
         (0,core.info)(`path_filters: ${this.pathFilters}`);
         (0,core.info)(`system_message: ${this.systemMessage}`);
-        (0,core.info)(`openai_light_model: ${this.openaiLightModel}`);
-        (0,core.info)(`openai_heavy_model: ${this.openaiHeavyModel}`);
-        (0,core.info)(`openai_model_temperature: ${this.openaiModelTemperature}`);
-        (0,core.info)(`openai_retries: ${this.openaiRetries}`);
-        (0,core.info)(`openai_timeout_ms: ${this.openaiTimeoutMS}`);
-        (0,core.info)(`openai_concurrency_limit: ${this.openaiConcurrencyLimit}`);
+        (0,core.info)(`bedrock_light_model: ${this.bedrockLightModel}`);
+        (0,core.info)(`bedrock_heavy_model: ${this.bedrockHeavyModel}`);
+        (0,core.info)(`bedrock_model_temperature: ${this.bedrockModelTemperature}`);
+        (0,core.info)(`bedrock_retries: ${this.bedrockRetries}`);
+        (0,core.info)(`bedrock_timeout_ms: ${this.bedrockTimeoutMS}`);
+        (0,core.info)(`bedrock_concurrency_limit: ${this.bedrockConcurrencyLimit}`);
         (0,core.info)(`github_concurrency_limit: ${this.githubConcurrencyLimit}`);
         (0,core.info)(`summary_token_limits: ${this.lightTokenLimits.string()}`);
         (0,core.info)(`review_token_limits: ${this.heavyTokenLimits.string()}`);
@@ -5747,7 +5747,7 @@ const repo = context.repo;
 const ignoreKeyword = '@coderabbitai: ignore';
 const codeReview = async (lightBot, heavyBot, options, prompts) => {
     const commenter = new lib_commenter/* Commenter */.Es();
-    const openaiConcurrencyLimit = pLimit(options.openaiConcurrencyLimit);
+    const bedrockConcurrencyLimit = pLimit(options.bedrockConcurrencyLimit);
     const githubConcurrencyLimit = pLimit(options.githubConcurrencyLimit);
     if (context.eventName !== 'pull_request' &&
         context.eventName !== 'pull_request_target') {
@@ -5965,8 +5965,8 @@ ${filterIgnoredFiles.length > 0
         try {
             const [summarizeResp] = await lightBot.chat(summarizePrompt);
             if (summarizeResp === '') {
-                (0,core.info)('summarize: nothing obtained from openai');
-                summariesFailed.push(`${filename} (nothing obtained from openai)`);
+                (0,core.info)('summarize: nothing obtained from bedrock');
+                summariesFailed.push(`${filename} (nothing obtained from bedrock)`);
                 return null;
             }
             else {
@@ -5989,8 +5989,8 @@ ${filterIgnoredFiles.length > 0
             }
         }
         catch (e) {
-            (0,core.warning)(`summarize: error from openai: ${e}`);
-            summariesFailed.push(`${filename} (error from openai: ${e})})`);
+            (0,core.warning)(`summarize: error from bedrock: ${e}`);
+            summariesFailed.push(`${filename} (error from bedrock: ${e})})`);
             return null;
         }
     };
@@ -5998,7 +5998,7 @@ ${filterIgnoredFiles.length > 0
     const skippedFiles = [];
     for (const [filename, fileContent, fileDiff] of filesAndChanges) {
         if (options.maxFiles <= 0 || summaryPromises.length < options.maxFiles) {
-            summaryPromises.push(openaiConcurrencyLimit(async () => await doSummary(filename, fileContent, fileDiff)));
+            summaryPromises.push(bedrockConcurrencyLimit(async () => await doSummary(filename, fileContent, fileDiff)));
         }
         else {
             skippedFiles.push(filename);
@@ -6016,10 +6016,10 @@ ${filterIgnoredFiles.length > 0
 ${filename}: ${summary}
 `;
             }
-            // ask chatgpt to summarize the summaries
+            // ask Bedrock to summarize the summaries
             const [summarizeResp] = await heavyBot.chat(prompts.renderSummarizeChangesets(inputs));
             if (summarizeResp === '') {
-                (0,core.warning)('summarize: nothing obtained from openai');
+                (0,core.warning)('summarize: nothing obtained from bedrock');
             }
             else {
                 inputs.rawSummary = summarizeResp;
@@ -6029,13 +6029,13 @@ ${filename}: ${summary}
     // final summary
     const [summarizeFinalResponse] = await heavyBot.chat(prompts.renderSummarize(inputs));
     if (summarizeFinalResponse === '') {
-        (0,core.info)('summarize: nothing obtained from openai');
+        (0,core.info)('summarize: nothing obtained from bedrock');
     }
     if (options.disableReleaseNotes === false) {
         // final release notes
         const [releaseNotesResponse] = await heavyBot.chat(prompts.renderSummarizeReleaseNotes(inputs));
         if (releaseNotesResponse === '') {
-            (0,core.info)('release notes: nothing obtained from openai');
+            (0,core.info)('release notes: nothing obtained from bedrock');
         }
         else {
             let message = '### Summary by CodeRabbit\n\n';
@@ -6177,7 +6177,7 @@ ${commentChain}
                 try {
                     const [response] = await heavyBot.chat(prompts.renderReviewFileDiff(ins));
                     if (response === '') {
-                        (0,core.info)('review: nothing obtained from openai');
+                        (0,core.info)('review: nothing obtained from bedrock');
                         reviewsFailed.push(`${filename} (no response)`);
                         return;
                     }
@@ -6216,7 +6216,7 @@ ${commentChain}
         const reviewPromises = [];
         for (const [filename, fileContent, , patches] of filesAndChangesReview) {
             if (options.maxFiles <= 0 || reviewPromises.length < options.maxFiles) {
-                reviewPromises.push(openaiConcurrencyLimit(async () => {
+                reviewPromises.push(bedrockConcurrencyLimit(async () => {
                     await doReview(filename, fileContent, patches);
                 }));
             }

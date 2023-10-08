@@ -4,7 +4,7 @@ Modified version of [coderabbitai/ai-pr-reviewer](https://github.com/coderabbita
 ## Overview
 
 CodeRabbit `ai-pr-reviewer` is an AI-based code reviewer and summarizer for
-GitHub pull requests using OpenAI's `gpt-3.5-turbo` and `gpt-4` models. It is
+GitHub pull requests using Bedrock's `gpt-3.5-turbo` and `gpt-4` models. It is
 designed to be used as a GitHub Action and can be configured to run on every
 pull request and review comments
 
@@ -17,7 +17,7 @@ pull request and review comments
 - **Continuous, incremental reviews**: Reviews are performed on each commit
   within a pull request, rather than a one-time review on the entire pull
   request.
-- **Cost-effective and reduced noise**: Incremental reviews save on OpenAI costs
+- **Cost-effective and reduced noise**: Incremental reviews save on Bedrock costs
   and reduce noise by tracking changed files between commits and the base of the
   pull request.
 - **"Light" model for summary**: Designed to be used with a "light"
@@ -101,8 +101,8 @@ jobs:
 ### Models: `gpt-4` and `gpt-3.5-turbo`
 
 Recommend using `gpt-3.5-turbo` for lighter tasks such as summarizing the
-changes (`openai_light_model` in configuration) and `gpt-4` for more complex
-review and commenting tasks (`openai_heavy_model` in configuration).
+changes (`bedrock_light_model` in configuration) and `gpt-4` for more complex
+review and commenting tasks (`bedrock_heavy_model` in configuration).
 
 Costs: `gpt-3.5-turbo` is dirt cheap. `gpt-4` is orders of magnitude more
 expensive, but the results are vastly superior. We are typically spending $20 a
@@ -121,7 +121,7 @@ value. For example, to review docs/blog posts, you can use the following prompt:
 ```yaml
 system_message: |
   You are `@coderabbitai` (aka `github-actions[bot]`), a language model
-  trained by OpenAI. Your purpose is to act as a highly experienced
+  trained by Bedrock. Your purpose is to act as a highly experienced
   DevRel (developer relations) professional with focus on cloud-native
   infrastructure.
 
@@ -250,18 +250,14 @@ jobs:
 See also:
 https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
 
-### Inspect the messages between OpenAI server
+### Inspect the messages between Bedrock server
 
 Set `debug: true` in the workflow file to enable debug mode, which will show the
 messages
 
 ### Disclaimer
 
-- Your code (files, diff, PR title/description) will be sent to OpenAI's servers
+- Your code (files, diff, PR title/description) will be sent to Bedrock's servers
   for processing. Please check with your compliance team before using this on
   your private code repositories.
-- OpenAI's API is used instead of ChatGPT session on their portal. OpenAI API
-  has a
-  [more conservative data usage policy](https://openai.com/policies/api-data-usage-policies)
-  compared to their ChatGPT offering.
-- This action is not affiliated with OpenAI.
+- This action is not affiliated with Bedrock.

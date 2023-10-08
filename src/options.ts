@@ -11,12 +11,12 @@ export class Options {
   reviewCommentLGTM: boolean
   pathFilters: PathFilter
   systemMessage: string
-  openaiLightModel: string
-  openaiHeavyModel: string
-  openaiModelTemperature: number
-  openaiRetries: number
-  openaiTimeoutMS: number
-  openaiConcurrencyLimit: number
+  bedrockLightModel: string
+  bedrockHeavyModel: string
+  bedrockModelTemperature: number
+  bedrockRetries: number
+  bedrockTimeoutMS: number
+  bedrockConcurrencyLimit: number
   githubConcurrencyLimit: number
   lightTokenLimits: TokenLimits
   heavyTokenLimits: TokenLimits
@@ -32,14 +32,14 @@ export class Options {
     reviewCommentLGTM = false,
     pathFilters: string[] | null = null,
     systemMessage = '',
-    openaiLightModel = 'gpt-3.5-turbo',
-    openaiHeavyModel = 'gpt-3.5-turbo',
-    openaiModelTemperature = '0.0',
-    openaiRetries = '3',
-    openaiTimeoutMS = '120000',
-    openaiConcurrencyLimit = '6',
+    bedrockLightModel = 'gpt-3.5-turbo',
+    bedrockHeavyModel = 'gpt-3.5-turbo',
+    bedrockModelTemperature = '0.0',
+    bedrockRetries = '3',
+    bedrockTimeoutMS = '120000',
+    bedrockConcurrencyLimit = '6',
     githubConcurrencyLimit = '6',
-    apiBaseUrl = 'https://api.openai.com/v1',
+    apiBaseUrl = 'https://api.bedrock.com/v1',
     language = 'en-US'
   ) {
     this.debug = debug
@@ -50,15 +50,15 @@ export class Options {
     this.reviewCommentLGTM = reviewCommentLGTM
     this.pathFilters = new PathFilter(pathFilters)
     this.systemMessage = systemMessage
-    this.openaiLightModel = openaiLightModel
-    this.openaiHeavyModel = openaiHeavyModel
-    this.openaiModelTemperature = parseFloat(openaiModelTemperature)
-    this.openaiRetries = parseInt(openaiRetries)
-    this.openaiTimeoutMS = parseInt(openaiTimeoutMS)
-    this.openaiConcurrencyLimit = parseInt(openaiConcurrencyLimit)
+    this.bedrockLightModel = bedrockLightModel
+    this.bedrockHeavyModel = bedrockHeavyModel
+    this.bedrockModelTemperature = parseFloat(bedrockModelTemperature)
+    this.bedrockRetries = parseInt(bedrockRetries)
+    this.bedrockTimeoutMS = parseInt(bedrockTimeoutMS)
+    this.bedrockConcurrencyLimit = parseInt(bedrockConcurrencyLimit)
     this.githubConcurrencyLimit = parseInt(githubConcurrencyLimit)
-    this.lightTokenLimits = new TokenLimits(openaiLightModel)
-    this.heavyTokenLimits = new TokenLimits(openaiHeavyModel)
+    this.lightTokenLimits = new TokenLimits(bedrockLightModel)
+    this.heavyTokenLimits = new TokenLimits(bedrockHeavyModel)
     this.apiBaseUrl = apiBaseUrl
     this.language = language
   }
@@ -73,12 +73,12 @@ export class Options {
     info(`review_comment_lgtm: ${this.reviewCommentLGTM}`)
     info(`path_filters: ${this.pathFilters}`)
     info(`system_message: ${this.systemMessage}`)
-    info(`openai_light_model: ${this.openaiLightModel}`)
-    info(`openai_heavy_model: ${this.openaiHeavyModel}`)
-    info(`openai_model_temperature: ${this.openaiModelTemperature}`)
-    info(`openai_retries: ${this.openaiRetries}`)
-    info(`openai_timeout_ms: ${this.openaiTimeoutMS}`)
-    info(`openai_concurrency_limit: ${this.openaiConcurrencyLimit}`)
+    info(`bedrock_light_model: ${this.bedrockLightModel}`)
+    info(`bedrock_heavy_model: ${this.bedrockHeavyModel}`)
+    info(`bedrock_model_temperature: ${this.bedrockModelTemperature}`)
+    info(`bedrock_retries: ${this.bedrockRetries}`)
+    info(`bedrock_timeout_ms: ${this.bedrockTimeoutMS}`)
+    info(`bedrock_concurrency_limit: ${this.bedrockConcurrencyLimit}`)
     info(`github_concurrency_limit: ${this.githubConcurrencyLimit}`)
     info(`summary_token_limits: ${this.lightTokenLimits.string()}`)
     info(`review_token_limits: ${this.heavyTokenLimits.string()}`)

@@ -32,7 +32,7 @@ export const codeReview = async (
 ): Promise<void> => {
   const commenter: Commenter = new Commenter()
 
-  const openaiConcurrencyLimit = pLimit(options.openaiConcurrencyLimit)
+  const bedrockConcurrencyLimit = pLimit(options.bedrockConcurrencyLimit)
   const githubConcurrencyLimit = pLimit(options.githubConcurrencyLimit)
 
   if (
@@ -340,8 +340,8 @@ ${
       const [summarizeResp] = await lightBot.chat(summarizePrompt)
 
       if (summarizeResp === '') {
-        info('summarize: nothing obtained from openai')
-        summariesFailed.push(`${filename} (nothing obtained from openai)`)
+        info('summarize: nothing obtained from bedrock')
+        summariesFailed.push(`${filename} (nothing obtained from bedrock)`)
         return null
       } else {
         if (options.reviewSimpleChanges === false) {
@@ -364,8 +364,8 @@ ${
         return [filename, summarizeResp, true]
       }
     } catch (e: any) {
-      warning(`summarize: error from openai: ${e as string}`)
-      summariesFailed.push(`${filename} (error from openai: ${e as string})})`)
+      warning(`summarize: error from bedrock: ${e as string}`)
+      summariesFailed.push(`${filename} (error from bedrock: ${e as string})})`)
       return null
     }
   }
@@ -375,7 +375,7 @@ ${
   for (const [filename, fileContent, fileDiff] of filesAndChanges) {
     if (options.maxFiles <= 0 || summaryPromises.length < options.maxFiles) {
       summaryPromises.push(
-        openaiConcurrencyLimit(
+        bedrockConcurrencyLimit(
           async () => await doSummary(filename, fileContent, fileDiff)
         )
       )
@@ -399,12 +399,12 @@ ${
 ${filename}: ${summary}
 `
       }
-      // ask chatgpt to summarize the summaries
+      // ask Bedrock to summarize the summaries
       const [summarizeResp] = await heavyBot.chat(
         prompts.renderSummarizeChangesets(inputs)
       )
       if (summarizeResp === '') {
-        warning('summarize: nothing obtained from openai')
+        warning('summarize: nothing obtained from bedrock')
       } else {
         inputs.rawSummary = summarizeResp
       }
@@ -416,7 +416,7 @@ ${filename}: ${summary}
     prompts.renderSummarize(inputs)
   )
   if (summarizeFinalResponse === '') {
-    info('summarize: nothing obtained from openai')
+    info('summarize: nothing obtained from bedrock')
   }
 
   if (options.disableReleaseNotes === false) {
@@ -425,7 +425,7 @@ ${filename}: ${summary}
       prompts.renderSummarizeReleaseNotes(inputs)
     )
     if (releaseNotesResponse === '') {
-      info('release notes: nothing obtained from openai')
+      info('release notes: nothing obtained from bedrock')
     } else {
       let message = '### Summary by CodeRabbit\n\n'
       message += releaseNotesResponse
@@ -619,7 +619,7 @@ ${commentChain}
             prompts.renderReviewFileDiff(ins)
           )
           if (response === '') {
-            info('review: nothing obtained from openai')
+            info('review: nothing obtained from bedrock')
             reviewsFailed.push(`${filename} (no response)`)
             return
           }
@@ -669,7 +669,7 @@ ${commentChain}
     for (const [filename, fileContent, , patches] of filesAndChangesReview) {
       if (options.maxFiles <= 0 || reviewPromises.length < options.maxFiles) {
         reviewPromises.push(
-          openaiConcurrencyLimit(async () => {
+          bedrockConcurrencyLimit(async () => {
             await doReview(filename, fileContent, patches)
           })
         )
