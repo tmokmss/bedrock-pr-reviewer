@@ -48,6 +48,9 @@ export class Bot {
     let response: InvokeModelCommandOutput | undefined
 
     try {
+      if (this.options.debug) {
+        info(`sending prompt: ${message}\n------------`)
+      }
       response = await pRetry(
         () =>
           this.client.send(
@@ -85,12 +88,11 @@ export class Bot {
       responseText = JSON.parse(
         Buffer.from(response.body).toString('utf-8')
       ).completion
-      info(`response: ${responseText}`)
     } else {
       warning('bedrock response is null')
     }
     if (this.options.debug) {
-      info(`bedrock responses: ${responseText}`)
+      info(`bedrock responses: ${responseText}\n-----------`)
     }
     const newIds: Ids = {
       parentMessageId: response?.$metadata.requestId,

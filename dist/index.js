@@ -2308,6 +2308,9 @@ class Bot {
         }
         let response;
         try {
+            if (this.options.debug) {
+                (0,core.info)(`sending prompt: ${message}\n------------`);
+            }
             response = await pRetry(() => this.client.send(new dist_cjs.InvokeModelCommand({
                 modelId: this.bedrockOptions.model,
                 body: JSON.stringify({
@@ -2335,13 +2338,12 @@ class Bot {
         let responseText = '';
         if (response != null) {
             responseText = JSON.parse(Buffer.from(response.body).toString('utf-8')).completion;
-            (0,core.info)(`response: ${responseText}`);
         }
         else {
             (0,core.warning)('bedrock response is null');
         }
         if (this.options.debug) {
-            (0,core.info)(`bedrock responses: ${responseText}`);
+            (0,core.info)(`bedrock responses: ${responseText}\n-----------`);
         }
         const newIds = {
             parentMessageId: response?.$metadata.requestId,
