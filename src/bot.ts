@@ -47,6 +47,7 @@ export class Bot {
 
     let response: InvokeModelCommandOutput | undefined
 
+    message = `IMPORTANT: Entire response must be in the language with ISO code: ${this.options.language}\n\n${message}`
     try {
       if (this.options.debug) {
         info(`sending prompt: ${message}\n------------`)

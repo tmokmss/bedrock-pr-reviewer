@@ -2307,6 +2307,7 @@ class Bot {
             return ['', {}];
         }
         let response;
+        message = `IMPORTANT: Entire response must be in the language with ISO code: ${this.options.language}\n\n${message}`;
         try {
             if (this.options.debug) {
                 (0,core.info)(`sending prompt: ${message}\n------------`);
