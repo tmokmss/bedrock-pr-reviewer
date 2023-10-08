@@ -15,10 +15,6 @@ Parameters:
       Subject claim filter for valid tokens.
       See https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#example-subject-claims
       for examples of fitlering by branch or deployment environment.
-  ManagedPolicyARNs:
-    Type: CommaDelimitedList
-    Default: arn:aws:iam::aws:policy/AdministratorAccess
-    Description: Comma separated list for arns for managed policies to attach to the role
 
 Metadata:
   AWS::CloudFormation::Interface:
@@ -27,10 +23,6 @@ Metadata:
           default: "GitHub Action Info"
         Parameters:
           - SubjectClaimFilters
-      - Label:
-          default: "AWS IAM Info"
-        Parameters:
-          - ManagedPolicyARNs
 
 Resources:
   GitHubIdentityProvider:
@@ -59,7 +51,17 @@ Resources:
               StringLike:
                 "token.actions.githubusercontent.com:sub": !Ref SubjectClaimFilters
       Description: Service Role for use in GitHub Actions
-      ManagedPolicyArns: !Ref ManagedPolicyARNs
+  ServiceRolePolicy:
+    Type: 'AWS::IAM::RolePolicy'
+    Properties:
+      PolicyName: root
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: 'bedrock:InvokeModel'
+            Resource: '*'
+      RoleName: !Ref GitHubActionsServiceRole
 
 Outputs:
   ServiceRoleARN:
