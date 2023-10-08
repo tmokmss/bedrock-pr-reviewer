@@ -2307,7 +2307,11 @@ class Bot {
             return ['', {}];
         }
         let response;
+        message = `IMPORTANT: Entire response must be in the language with ISO code: ${this.options.language}\n\n${message}`;
         try {
+            if (this.options.debug) {
+                (0,core.info)(`sending prompt: ${message}\n------------`);
+            }
             response = await pRetry(() => this.client.send(new dist_cjs.InvokeModelCommand({
                 modelId: this.bedrockOptions.model,
                 body: JSON.stringify({
@@ -2331,7 +2335,6 @@ class Bot {
             (0,core.info)(`response: ${response}, failed to send message to bedrock: ${e}`);
         }
         const end = Date.now();
-        (0,core.info)(`response: ${JSON.stringify(response)}`);
         (0,core.info)(`bedrock sendMessage (including retries) response time: ${end - start} ms`);
         let responseText = '';
         if (response != null) {
@@ -2340,12 +2343,8 @@ class Bot {
         else {
             (0,core.warning)('bedrock response is null');
         }
-        // remove the prefix "with " in the response
-        if (responseText.startsWith('with ')) {
-            responseText = responseText.substring(5);
-        }
         if (this.options.debug) {
-            (0,core.info)(`bedrock responses: ${responseText}`);
+            (0,core.info)(`bedrock responses: ${responseText}\n-----------`);
         }
         const newIds = {
             parentMessageId: response?.$metadata.requestId,
@@ -3110,7 +3109,7 @@ __nccwpck_require__.r(__webpack_exports__);
 
 
 async function run() {
-    const options = new _options__WEBPACK_IMPORTED_MODULE_2__/* .Options */ .Ei((0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('debug'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('disable_review'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('disable_release_notes'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('max_files'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('review_simple_changes'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('review_comment_lgtm'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getMultilineInput)('path_filters'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('system_message'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_light_model'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_heavy_model'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_model_temperature'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_retries'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_timeout_ms'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_concurrency_limit'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('github_concurrency_limit'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_base_url'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('language'));
+    const options = new _options__WEBPACK_IMPORTED_MODULE_2__/* .Options */ .Ei((0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('debug'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('disable_review'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('disable_release_notes'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('max_files'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('review_simple_changes'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('review_comment_lgtm'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getMultilineInput)('path_filters'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('system_message'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_light_model'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_heavy_model'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_model_temperature'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_retries'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_timeout_ms'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_concurrency_limit'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('github_concurrency_limit'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('language'));
     // print options
     options.print();
     const prompts = new _prompts__WEBPACK_IMPORTED_MODULE_5__/* .Prompts */ .j((0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('summarize'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('summarize_release_notes'));
@@ -5039,9 +5038,8 @@ class Options {
     githubConcurrencyLimit;
     lightTokenLimits;
     heavyTokenLimits;
-    apiBaseUrl;
     language;
-    constructor(debug, disableReview, disableReleaseNotes, maxFiles = '0', reviewSimpleChanges = false, reviewCommentLGTM = false, pathFilters = null, systemMessage = '', bedrockLightModel = 'gpt-3.5-turbo', bedrockHeavyModel = 'gpt-3.5-turbo', bedrockModelTemperature = '0.0', bedrockRetries = '3', bedrockTimeoutMS = '120000', bedrockConcurrencyLimit = '6', githubConcurrencyLimit = '6', apiBaseUrl = 'https://api.bedrock.com/v1', language = 'en-US') {
+    constructor(debug, disableReview, disableReleaseNotes, maxFiles = '0', reviewSimpleChanges = false, reviewCommentLGTM = false, pathFilters = null, systemMessage = '', bedrockLightModel, bedrockHeavyModel, bedrockModelTemperature = '0.0', bedrockRetries = '3', bedrockTimeoutMS = '120000', bedrockConcurrencyLimit = '6', githubConcurrencyLimit = '6', language = 'en-US') {
         this.debug = debug;
         this.disableReview = disableReview;
         this.disableReleaseNotes = disableReleaseNotes;
@@ -5059,7 +5057,6 @@ class Options {
         this.githubConcurrencyLimit = parseInt(githubConcurrencyLimit);
         this.lightTokenLimits = new TokenLimits(bedrockLightModel);
         this.heavyTokenLimits = new TokenLimits(bedrockHeavyModel);
-        this.apiBaseUrl = apiBaseUrl;
         this.language = language;
     }
     // print all options using core.info
@@ -5081,7 +5078,6 @@ class Options {
         (0,core.info)(`github_concurrency_limit: ${this.githubConcurrencyLimit}`);
         (0,core.info)(`summary_token_limits: ${this.lightTokenLimits.string()}`);
         (0,core.info)(`review_token_limits: ${this.heavyTokenLimits.string()}`);
-        (0,core.info)(`api_base_url: ${this.apiBaseUrl}`);
         (0,core.info)(`language: ${this.language}`);
     }
     checkPath(path) {
@@ -5158,73 +5154,56 @@ class BedrockOptions {
 class Prompts {
     summarize;
     summarizeReleaseNotes;
-    summarizeFileDiff = `## GitHub PR Title
+    summarizeFileDiff = `
+I would like you to succinctly summarize the Pull Request within 100 words.
+The Pull Request is described with <title>, <description>, and <diff> tags.
+If applicable, your summary should include a note about alterations to the signatures of exported functions, global data structures and variables, and any changes that might affect the external interface or behavior of the code.
 
-\`$title\` 
+<title>
+$title 
+</title>
 
-## Description
-
-\`\`\`
+<description>
 $description
-\`\`\`
+</description>
 
-## Diff
-
-\`\`\`diff
+<diff>
 $file_diff
-\`\`\`
-
-## Instructions
-
-I would like you to succinctly summarize the diff within 100 words.
-If applicable, your summary should include a note about alterations 
-to the signatures of exported functions, global data structures and 
-variables, and any changes that might affect the external interface or 
-behavior of the code.
+</diff>
 `;
-    triageFileDiff = `Below the summary, I would also like you to triage the diff as \`NEEDS_REVIEW\` or 
-\`APPROVED\` based on the following criteria:
+    triageFileDiff = `Below the summary, I would also like you to triage the diff as \`NEEDS_REVIEW\` or \`APPROVED\` based on the following criteria:
 
-- If the diff involves any modifications to the logic or functionality, even if they 
-  seem minor, triage it as \`NEEDS_REVIEW\`. This includes changes to control structures, 
-  function calls, or variable assignments that might impact the behavior of the code.
-- If the diff only contains very minor changes that don't affect the code logic, such as 
-  fixing typos, formatting, or renaming variables for clarity, triage it as \`APPROVED\`.
+- If the diff involves any modifications to the logic or functionality, even if they seem minor, triage it as \`NEEDS_REVIEW\`. This includes changes to control structures, function calls, or variable assignments that might impact the behavior of the code.
+- If the diff only contains very minor changes that don't affect the code logic, such as fixing typos, formatting, or renaming variables for clarity, triage it as \`APPROVED\`.
 
-Please evaluate the diff thoroughly and take into account factors such as the number of 
-lines changed, the potential impact on the overall system, and the likelihood of 
-introducing new bugs or security vulnerabilities. 
+Please evaluate the diff thoroughly and take into account factors such as the number of lines changed, the potential impact on the overall system, and the likelihood of introducing new bugs or security vulnerabilities. 
 When in doubt, always err on the side of caution and triage the diff as \`NEEDS_REVIEW\`.
 
 You must strictly follow the format below for triaging the diff:
 [TRIAGE]: <NEEDS_REVIEW or APPROVED>
 
 Important:
-- In your summary do not mention that the file needs a through review or caution about
-  potential issues.
+- In your summary do not mention that the file needs a through review or caution about potential issues.
 - Do not provide any reasoning why you triaged the diff as \`NEEDS_REVIEW\` or \`APPROVED\`.
-- Do not mention that these changes affect the logic or functionality of the code in 
-  the summary. You must only use the triage status format above to indicate that.
+- Do not mention that these changes affect the logic or functionality of the code in the summary. You must only use the triage status format above to indicate that.
 `;
-    summarizeChangesets = `Provided below are changesets in this pull request. Changesets 
-are in chronlogical order and new changesets are appended to the
-end of the list. The format consists of filename(s) and the summary 
+    summarizeChangesets = `Provided below (<changeSet> tag) are changesets in this pull request.
+Changesets are in chronlogical order and new changesets are appended to the end of the list. The format consists of filename(s) and the summary 
 of changes for those files. There is a separator between each changeset.
-Your task is to deduplicate and group together files with
-related/similar changes into a single changeset. Respond with the updated 
-changesets using the same format as the input. 
+Your task is to deduplicate and group together files with related/similar changes into a single changeset. Respond with the updated changesets using the same format as the input. 
 
+<changeSet>
 $raw_summary
+</changeSet>
 `;
-    summarizePrefix = `Here is the summary of changes you have generated for files:
-      \`\`\`
-      $raw_summary
-      \`\`\`
+    summarizePrefix = `Below <summary> tag is the summary of changes you have generated for files:
+<summary>
+$raw_summary
+</summary>
 
 `;
-    summarizeShort = `Your task is to provide a concise summary of the changes. This 
-summary will be used as a prompt while reviewing each file and must be very clear for 
-the AI bot to understand. 
+    summarizeShort = `Your task is to provide a concise summary of the changes.
+This summary will be used as a prompt while reviewing each file and must be very clear for the AI bot to understand. 
 
 Instructions:
 
@@ -5234,26 +5213,23 @@ Instructions:
 - Do not mention that these changes affect the logic or functionality of the code.
 - The summary should not exceed 500 words.
 `;
-    reviewFileDiff = `## GitHub PR Title
+    reviewFileDiff = `
+<title>
+$title 
+</title>
 
-\`$title\` 
-
-## Description
-
-\`\`\`
+<description>
 $description
-\`\`\`
+</description>
 
-## Summary of changes
-
-\`\`\`
+<changes>
 $short_summary
-\`\`\`
+</changes>
 
 ## IMPORTANT Instructions
 
 Input: New hunks annotated with line numbers and old hunks (replaced code). Hunks represent incomplete code fragments.
-Additional Context: PR title, description, summaries and comment chains.
+Additional Context: <title>, <description>, <changes> and comment chains.
 Task: Review new hunks for substantive issues using provided context and respond with comments if necessary.
 Output: Review comments in markdown with exact line number ranges in new hunks. Start and end line numbers must be within the same hunk. For single-line comments, start=end line number. Must use example response format below.
 Use fenced code blocks using the relevant language identifier where applicable.
@@ -5261,21 +5237,16 @@ Don't annotate code snippets with line numbers. Format and indent code correctly
 Do not use \`suggestion\` code blocks.
 For fixes, use \`diff\` code blocks, marking changes with \`+\` or \`-\`. The line number range for comments with fix snippets must exactly match the range to replace in the new hunk.
 
-- Do NOT provide general feedback, summaries, explanations of changes, or praises 
-  for making good additions. 
-- Focus solely on offering specific, objective insights based on the 
-  given context and refrain from making broad comments about potential impacts on 
-  the system or question intentions behind the changes.
+- Do NOT provide general feedback, summaries, explanations of changes, or praises for making good additions. 
+- Focus solely on offering specific, objective insights based on the given context and refrain from making broad comments about potential impacts on the system or question intentions behind the changes.
 
-If there are no issues found on a line range, you MUST respond with the 
-text \`LGTM!\` for that line range in the review section. 
+If there are no issues found on a line range, you MUST respond with the text \`LGTM!\` for that line range in the review section. 
 
-## Example
-
+<example>
 ### Example changes
 
 ---new_hunk---
-\`\`\`
+<code>
   z = x / y
     return z
 
@@ -5288,10 +5259,10 @@ text \`LGTM!\` for that line range in the review section.
 
 def subtract(x, y):
   z = x - y
-\`\`\`
+</code>
   
 ---old_hunk---
-\`\`\`
+<code>
   z = x / y
     return z
 
@@ -5300,7 +5271,7 @@ def add(x, y):
 
 def subtract(x, y):
     z = x - y
-\`\`\`
+</code>
 
 ---comment_chains---
 \`\`\`
@@ -5313,14 +5284,15 @@ Please review this change.
 
 22-22:
 There's a syntax error in the add function.
-\`\`\`diff
+<diff>
 -    retrn z
 +    return z
-\`\`\`
+</diff>
 ---
 24-25:
 LGTM!
 ---
+</example>
 
 ## Changes made to \`$filename\` for your review
 
@@ -6058,17 +6030,6 @@ ${lib_commenter/* RAW_SUMMARY_END_TAG */.rV}
 ${lib_commenter/* SHORT_SUMMARY_START_TAG */.O$}
 ${inputs.shortSummary}
 ${lib_commenter/* SHORT_SUMMARY_END_TAG */.Zb}
-
----
-
-<details>
-<summary>Uplevel your code reviews with CodeRabbit Pro</summary>
-
-### CodeRabbit Pro
-
-If you like this project, please support us by purchasing the [Pro version](https://coderabbit.ai). The Pro version has advanced context, superior noise reduction and several proprietary improvements compared to the open source version. Moreover, CodeRabbit Pro is free for open source projects.
-
-</details>
 `;
     statusMsg += `
 ${skippedFiles.length > 0

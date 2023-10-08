@@ -47,7 +47,11 @@ export class Bot {
 
     let response: InvokeModelCommandOutput | undefined
 
+    message = `IMPORTANT: Entire response must be in the language with ISO code: ${this.options.language}\n\n${message}`
     try {
+      if (this.options.debug) {
+        info(`sending prompt: ${message}\n------------`)
+      }
       response = await pRetry(
         () =>
           this.client.send(
@@ -76,7 +80,6 @@ export class Bot {
       info(`response: ${response}, failed to send message to bedrock: ${e}`)
     }
     const end = Date.now()
-    info(`response: ${JSON.stringify(response)}`)
     info(
       `bedrock sendMessage (including retries) response time: ${end - start} ms`
     )
@@ -89,12 +92,8 @@ export class Bot {
     } else {
       warning('bedrock response is null')
     }
-    // remove the prefix "with " in the response
-    if (responseText.startsWith('with ')) {
-      responseText = responseText.substring(5)
-    }
     if (this.options.debug) {
-      info(`bedrock responses: ${responseText}`)
+      info(`bedrock responses: ${responseText}\n-----------`)
     }
     const newIds: Ids = {
       parentMessageId: response?.$metadata.requestId,

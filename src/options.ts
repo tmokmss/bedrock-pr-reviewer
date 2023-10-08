@@ -20,7 +20,6 @@ export class Options {
   githubConcurrencyLimit: number
   lightTokenLimits: TokenLimits
   heavyTokenLimits: TokenLimits
-  apiBaseUrl: string
   language: string
 
   constructor(
@@ -32,14 +31,13 @@ export class Options {
     reviewCommentLGTM = false,
     pathFilters: string[] | null = null,
     systemMessage = '',
-    bedrockLightModel = 'gpt-3.5-turbo',
-    bedrockHeavyModel = 'gpt-3.5-turbo',
+    bedrockLightModel: string,
+    bedrockHeavyModel: string,
     bedrockModelTemperature = '0.0',
     bedrockRetries = '3',
     bedrockTimeoutMS = '120000',
     bedrockConcurrencyLimit = '6',
     githubConcurrencyLimit = '6',
-    apiBaseUrl = 'https://api.bedrock.com/v1',
     language = 'en-US'
   ) {
     this.debug = debug
@@ -59,7 +57,6 @@ export class Options {
     this.githubConcurrencyLimit = parseInt(githubConcurrencyLimit)
     this.lightTokenLimits = new TokenLimits(bedrockLightModel)
     this.heavyTokenLimits = new TokenLimits(bedrockHeavyModel)
-    this.apiBaseUrl = apiBaseUrl
     this.language = language
   }
 
@@ -82,7 +79,6 @@ export class Options {
     info(`github_concurrency_limit: ${this.githubConcurrencyLimit}`)
     info(`summary_token_limits: ${this.lightTokenLimits.string()}`)
     info(`review_token_limits: ${this.heavyTokenLimits.string()}`)
-    info(`api_base_url: ${this.apiBaseUrl}`)
     info(`language: ${this.language}`)
   }
 
