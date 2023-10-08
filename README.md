@@ -1,13 +1,10 @@
-# AI-based PR reviewer and summarizer
-
-[![Discord](https://img.shields.io/badge/Join%20us%20on-Discord-blue?logo=discord&style=flat-square)](https://discord.gg/GsXnASn26c)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![GitHub](https://img.shields.io/github/last-commit/coderabbitai/ai-pr-reviewer/main?style=flat-square)](https://github.com/coderabbitai/ai-pr-reviewer/commits/main)
+# AI-based PR reviewer and summarizer w/ Amazon Bedrock Claude
+Modified version of [coderabbitai/ai-pr-reviewer](https://github.com/coderabbitai/ai-pr-reviewer) to use Amazon Bedrock instead.
 
 ## Overview
 
 CodeRabbit `ai-pr-reviewer` is an AI-based code reviewer and summarizer for
-GitHub pull requests using OpenAI's `gpt-3.5-turbo` and `gpt-4` models. It is
+GitHub pull requests using Bedrock's `gpt-3.5-turbo` and `gpt-4` models. It is
 designed to be used as a GitHub Action and can be configured to run on every
 pull request and review comments
 
@@ -20,7 +17,7 @@ pull request and review comments
 - **Continuous, incremental reviews**: Reviews are performed on each commit
   within a pull request, rather than a one-time review on the entire pull
   request.
-- **Cost-effective and reduced noise**: Incremental reviews save on OpenAI costs
+- **Cost-effective and reduced noise**: Incremental reviews save on Bedrock costs
   and reduce noise by tracking changed files between commits and the base of the
   pull request.
 - **"Light" model for summary**: Designed to be used with a "light"
@@ -39,8 +36,7 @@ pull request and review comments
   process or even change the review objective.
 
 To use this tool, you need to add the provided YAML file to your repository and
-configure the required environment variables, such as `GITHUB_TOKEN` and
-`OPENAI_API_KEY`. For more information on usage, examples, contributing, and
+configure the required IAM role. For more information on usage, examples, contributing, and
 FAQs, you can refer to the sections below.
 
 - [Overview](#overview)
@@ -52,18 +48,11 @@ FAQs, you can refer to the sections below.
 - [Contribute](#contribute)
 - [FAQs](#faqs)
 
-## CodeRabbit Pro
-
-The professional version of `openai-pr-reviewer` project is now available at
-[coderabbit.ai](http://coderabbit.ai). Building upon our open source foundation,
-CodeRabbit Pro offers premium features including enhanced context and superior
-noise reduction, dedicated support, and our ongoing commitment to improve code
-reviews. Moreover, CodeRabbit Pro is free for open source projects.
-
 ## Install instructions
 
-`ai-pr-reviewer` runs as a GitHub Action. Add the below file to your repository
-at `.github/workflows/ai-pr-reviewer.yml`
+You have to create an IAM role first for authenticating Bedrock API. You can use [the CloudFormation template](docs/oidc-cfn.yaml) to create one.
+
+`ai-pr-reviewer` runs as a GitHub Action. Add the below file to your repository at `.github/workflows/ai-pr-reviewer.yml`.
 
 ```yaml
 name: Code Review
@@ -88,10 +77,16 @@ jobs:
   review:
     runs-on: ubuntu-latest
     steps:
-      - uses: coderabbitai/ai-pr-reviewer@latest
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::123456789012:role/YourOidcIamRole
+          role-session-name: gha-session
+          aws-region: us-east-1
+      - name: PR review
+        uses: tmokmss/bedrock-pr-reviewer@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         with:
           debug: false
           review_simple_changes: false
@@ -102,18 +97,12 @@ jobs:
 
 - `GITHUB_TOKEN`: This should already be available to the GitHub Action
   environment. This is used to add comments to the pull request.
-- `OPENAI_API_KEY`: use this to authenticate with OpenAI API. You can get one
-  [here](https://platform.openai.com/account/api-keys). Please add this key to
-  your GitHub Action secrets.
-- `OPENAI_API_ORG`: (optional) use this to use the specified organization with
-  OpenAI API if you have multiple. Please add this key to your GitHub Action
-  secrets.
 
 ### Models: `gpt-4` and `gpt-3.5-turbo`
 
 Recommend using `gpt-3.5-turbo` for lighter tasks such as summarizing the
-changes (`openai_light_model` in configuration) and `gpt-4` for more complex
-review and commenting tasks (`openai_heavy_model` in configuration).
+changes (`bedrock_light_model` in configuration) and `gpt-4` for more complex
+review and commenting tasks (`bedrock_heavy_model` in configuration).
 
 Costs: `gpt-3.5-turbo` is dirt cheap. `gpt-4` is orders of magnitude more
 expensive, but the results are vastly superior. We are typically spending $20 a
@@ -132,7 +121,7 @@ value. For example, to review docs/blog posts, you can use the following prompt:
 ```yaml
 system_message: |
   You are `@coderabbitai` (aka `github-actions[bot]`), a language model
-  trained by OpenAI. Your purpose is to act as a highly experienced
+  trained by Bedrock. Your purpose is to act as a highly experienced
   DevRel (developer relations) professional with focus on cloud-native
   infrastructure.
 
@@ -261,18 +250,14 @@ jobs:
 See also:
 https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
 
-### Inspect the messages between OpenAI server
+### Inspect the messages between Bedrock server
 
 Set `debug: true` in the workflow file to enable debug mode, which will show the
 messages
 
 ### Disclaimer
 
-- Your code (files, diff, PR title/description) will be sent to OpenAI's servers
+- Your code (files, diff, PR title/description) will be sent to Bedrock's servers
   for processing. Please check with your compliance team before using this on
   your private code repositories.
-- OpenAI's API is used instead of ChatGPT session on their portal. OpenAI API
-  has a
-  [more conservative data usage policy](https://openai.com/policies/api-data-usage-policies)
-  compared to their ChatGPT offering.
-- This action is not affiliated with OpenAI.
+- This action is not affiliated with Bedrock.
