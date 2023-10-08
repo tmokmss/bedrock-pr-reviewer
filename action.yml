@@ -144,10 +144,6 @@ inputs:
     required: false
     description: 'Disable release notes'
     default: 'false'
-  bedrock_base_url:
-    required: false
-    description: 'The url of the bedrock api interface.'
-    default: 'https://api.bedrock.com/v1'
   bedrock_light_model:
     required: false
     description:
