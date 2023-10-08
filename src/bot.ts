@@ -76,7 +76,6 @@ export class Bot {
       info(`response: ${response}, failed to send message to bedrock: ${e}`)
     }
     const end = Date.now()
-    info(`response: ${JSON.stringify(response)}`)
     info(
       `bedrock sendMessage (including retries) response time: ${end - start} ms`
     )
@@ -86,12 +85,9 @@ export class Bot {
       responseText = JSON.parse(
         Buffer.from(response.body).toString('utf-8')
       ).completion
+      info(`response: ${responseText}`)
     } else {
       warning('bedrock response is null')
-    }
-    // remove the prefix "with " in the response
-    if (responseText.startsWith('with ')) {
-      responseText = responseText.substring(5)
     }
     if (this.options.debug) {
       info(`bedrock responses: ${responseText}`)
