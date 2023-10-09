@@ -1,12 +1,9 @@
 # AI-based PR reviewer and summarizer w/ Amazon Bedrock Claude
-Modified version of [coderabbitai/ai-pr-reviewer](https://github.com/coderabbitai/ai-pr-reviewer) to use Amazon Bedrock instead.
+Modified version of [reviewbot/ai-pr-reviewer](https://github.com/reviewbot/ai-pr-reviewer) to use Amazon Bedrock instead.
 
 ## Overview
 
-CodeRabbit `ai-pr-reviewer` is an AI-based code reviewer and summarizer for
-GitHub pull requests using Bedrock's `gpt-3.5-turbo` and `gpt-4` models. It is
-designed to be used as a GitHub Action and can be configured to run on every
-pull request and review comments
+`ai-pr-reviewer` is an AI-based code reviewer and summarizer for GitHub pull requests using Bedrock's Anthropic Claude models. It is designed to be used as a GitHub Action and can be configured to run on every pull request and review comments.
 
 ## Reviewer Features:
 
@@ -21,9 +18,7 @@ pull request and review comments
   and reduce noise by tracking changed files between commits and the base of the
   pull request.
 - **"Light" model for summary**: Designed to be used with a "light"
-  summarization model (e.g. `gpt-3.5-turbo`) and a "heavy" review model (e.g.
-  `gpt-4`). _For best results, use `gpt-4` as the "heavy" model, as thorough
-  code review needs strong reasoning abilities._
+  summarization model and a "heavy" review model.
 - **Chat with bot**: Supports conversation with the bot in the context of lines
   of code or entire files, useful for providing context, generating test cases,
   and reducing code complexity.
@@ -40,10 +35,9 @@ configure the required IAM role. For more information on usage, examples, contri
 FAQs, you can refer to the sections below.
 
 - [Overview](#overview)
-- [Professional Version of CodeRabbit](#professional-version-of-coderabbit)
 - [Reviewer Features](#reviewer-features)
 - [Install instructions](#install-instructions)
-- [Conversation with CodeRabbit](#conversation-with-coderabbit)
+- [Conversation with AI reviewer](#conversation-with-ai-reviewer)
 - [Examples](#examples)
 - [Contribute](#contribute)
 - [FAQs](#faqs)
@@ -120,13 +114,13 @@ value. For example, to review docs/blog posts, you can use the following prompt:
 
 ```yaml
 system_message: |
-  You are `@coderabbitai` (aka `github-actions[bot]`), a language model
+  You are `@reviewbot` (aka `github-actions[bot]`), a language model
   trained by Bedrock. Your purpose is to act as a highly experienced
   DevRel (developer relations) professional with focus on cloud-native
   infrastructure.
 
   Company context -
-  CodeRabbit is an AI-powered Code reviewer.It boosts code quality and cuts manual effort. Offers context-aware, line-by-line feedback, highlights critical changes,
+  AI reviewer is an AI-powered Code reviewer.It boosts code quality and cuts manual effort. Offers context-aware, line-by-line feedback, highlights critical changes,
   enables bot interaction, and lets you commit suggestions directly from GitHub.
 
   When reviewing or generating content focus on key areas such as -
@@ -147,15 +141,15 @@ system_message: |
 
 </details>
 
-## Conversation with CodeRabbit
+## Conversation with AI reviewer
 
 You can reply to a review comment made by this action and get a response based
 on the diff context. Additionally, you can invite the bot to a conversation by
-tagging it in the comment (`@coderabbitai`).
+tagging it in the comment (`@reviewbot`).
 
 Example:
 
-> @coderabbitai Please generate a test plan for this file.
+> @reviewbot Please generate a test plan for this file.
 
 Note: A review comment is a comment made on a diff or a file in the pull
 request.
@@ -167,7 +161,7 @@ to review documentation, you can ignore PRs that only change the documentation.
 To ignore a PR, add the following keyword in the PR description:
 
 ```text
-@coderabbitai: ignore
+@reviewbot: ignore
 ```
 
 ## Examples
@@ -237,10 +231,16 @@ jobs:
   review:
     runs-on: ubuntu-latest
     steps:
-      - uses: coderabbitai/ai-pr-reviewer@latest
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::123456789012:role/YourOidcIamRole
+          role-session-name: gha-session
+          aws-region: us-east-1
+      - name: PR review
+        uses: tmokmss/bedrock-pr-reviewer@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         with:
           debug: false
           review_simple_changes: false
@@ -261,3 +261,6 @@ messages
   for processing. Please check with your compliance team before using this on
   your private code repositories.
 - This action is not affiliated with Bedrock.
+
+## Copyright notice
+Copyright for portions of project `ai-pr-reviewer` are held by [CodeRabbit](https://coderabbit.ai/) as part of project `bedrock-pr-reviewer`. See [CodeRabbit.LICENSE](./CodeRabbit.LICENSE) for the original license.
