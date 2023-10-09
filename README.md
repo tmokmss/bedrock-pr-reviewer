@@ -1,5 +1,5 @@
 # AI-based PR reviewer and summarizer w/ Amazon Bedrock Claude
-Modified version of [reviewbot/ai-pr-reviewer](https://github.com/reviewbot/ai-pr-reviewer) to use Amazon Bedrock instead.
+This is a modified version of [coderabbitai/ai-pr-reviewer](https://github.com/coderabbitai/ai-pr-reviewer) to use Amazon Bedrock instead.
 
 ## Overview
 
