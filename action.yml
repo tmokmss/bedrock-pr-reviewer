@@ -23,6 +23,10 @@ inputs:
     required: false
     description: 'Leave comments even if the patch is LGTM'
     default: 'false'
+  only_allow_collaborator:
+    required: false
+    description: 'Allow Bedrock access only for collaborators'
+    default: 'false'
   path_filters:
     required: false
     description: |
