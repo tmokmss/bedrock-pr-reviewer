@@ -67,6 +67,8 @@ Instructions:
 `
 
   reviewFileDiff = `
+$system_message
+
 <pull_request_title>
 $title 
 </pull_request_title>
@@ -152,7 +154,10 @@ Please review this change.
 $patches
 `
 
-  comment = `A comment was made on a GitHub PR review for a 
+  comment = `
+$system_message
+
+A comment was made on a GitHub PR review for a 
 diff hunk on a file - \`$filename\`. I would like you to follow 
 the instructions in that comment. 
 

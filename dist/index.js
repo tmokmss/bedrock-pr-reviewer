@@ -2371,7 +2371,7 @@ class Bot {
 /* harmony export */   "oi": () => (/* binding */ RAW_SUMMARY_START_TAG),
 /* harmony export */   "rV": () => (/* binding */ RAW_SUMMARY_END_TAG)
 /* harmony export */ });
-/* unused harmony exports COMMENT_GREETING, IN_PROGRESS_START_TAG, IN_PROGRESS_END_TAG, DESCRIPTION_START_TAG, DESCRIPTION_END_TAG, COMMIT_ID_START_TAG, COMMIT_ID_END_TAG */
+/* unused harmony exports COMMENT_GREETING, IN_PROGRESS_START_TAG, IN_PROGRESS_END_TAG, DESCRIPTION_START_TAG, DESCRIPTION_END_TAG, COMMIT_ID_START_TAG, COMMIT_ID_END_TAG, SELF_LOGIN */
 /* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(42186);
 /* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _actions_github__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(95438);
@@ -5234,6 +5234,8 @@ Instructions:
 - The summary should not exceed 500 words.
 `;
     reviewFileDiff = `
+$system_message
+
 <pull_request_title>
 $title 
 </pull_request_title>
@@ -5318,7 +5320,10 @@ Please review this change.
 
 $patches
 `;
-    comment = `A comment was made on a GitHub PR review for a 
+    comment = `
+$system_message
+
+A comment was made on a GitHub PR review for a 
 diff hunk on a file - \`$filename\`. I would like you to follow 
 the instructions in that comment. 
 
