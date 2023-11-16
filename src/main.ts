@@ -68,6 +68,9 @@ async function run(): Promise<void> {
     return
   }
 
+  warning(process.env.GITHUB_ACTOR!);
+  warning(process.env.GITHUB_ACTOR_ID!);
+
   try {
     // check if the event is pull_request
     if (

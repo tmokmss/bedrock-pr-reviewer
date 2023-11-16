@@ -3141,6 +3141,8 @@ async function run() {
         (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.warning)(`Skipped: failed to create review bot, please check your bedrock_api_key: ${e}, backtrace: ${e.stack}`);
         return;
     }
+    (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.warning)(process.env.GITHUB_ACTOR);
+    (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.warning)(process.env.GITHUB_ACTOR_ID);
     try {
         // check if the event is pull_request
         if (process.env.GITHUB_EVENT_NAME === 'pull_request' ||
