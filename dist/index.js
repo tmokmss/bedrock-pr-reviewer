@@ -5430,7 +5430,8 @@ const ASK_BOT = '@reviewbot';
 const handleReviewComment = async (heavyBot, options, prompts) => {
     const commenter = new _commenter__WEBPACK_IMPORTED_MODULE_2__/* .Commenter */ .Es();
     const inputs = new _inputs__WEBPACK_IMPORTED_MODULE_5__/* .Inputs */ .k();
-    if (context.eventName !== 'pull_request_review_comment') {
+    if (context.eventName !== 'pull_request_review_comment' &&
+        context.eventName !== 'issue_comment') {
         (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.warning)(`Skipped: ${context.eventName} is not a pull_request_review_comment event`);
         return;
     }
