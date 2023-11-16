@@ -6344,8 +6344,14 @@ const parsePatch = (patch) => {
         newHunk: newHunkLines.join('\n')
     };
 };
-function parseReview(response, patches, debug = false) {
+function parseReview(response, patches, debugEnabled = false) {
     const reviews = [];
+    try {
+        (0,core.debug)(JSON.parse(response));
+    }
+    catch (e) {
+        (0,core.error)(e.message);
+    }
     response = sanitizeResponse(response.trim());
     const lines = response.split('\n');
     const lineNumberRangeRegex = /(?:^|\s)(\d+)-(\d+):\s*$/;
@@ -6432,7 +6438,7 @@ ${review.comment}`;
             currentStartLine = parseInt(lineNumberRangeMatch[1], 10);
             currentEndLine = parseInt(lineNumberRangeMatch[2], 10);
             currentComment = '';
-            if (debug) {
+            if (debugEnabled) {
                 (0,core.info)(`Found line number range: ${currentStartLine}-${currentEndLine}`);
             }
             continue;
@@ -6442,7 +6448,7 @@ ${review.comment}`;
             currentStartLine = null;
             currentEndLine = null;
             currentComment = '';
-            if (debug) {
+            if (debugEnabled) {
                 (0,core.info)('Found comment separator');
             }
             continue;

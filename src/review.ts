@@ -1,4 +1,4 @@
-import {error, info, warning} from '@actions/core'
+import {debug, error, info, warning} from '@actions/core'
 // eslint-disable-next-line camelcase
 import {context as github_context} from '@actions/github'
 import pLimit from 'p-limit'
@@ -855,9 +855,15 @@ interface Review {
 function parseReview(
   response: string,
   patches: Array<[number, number, string]>,
-  debug = false
+  debugEnabled = false
 ): Review[] {
   const reviews: Review[] = []
+
+  try {
+    debug(JSON.parse(response))
+  } catch (e: any) {
+    error(e.message)
+  }
 
   response = sanitizeResponse(response.trim())
 
@@ -976,7 +982,7 @@ ${review.comment}`
       currentStartLine = parseInt(lineNumberRangeMatch[1], 10)
       currentEndLine = parseInt(lineNumberRangeMatch[2], 10)
       currentComment = ''
-      if (debug) {
+      if (debugEnabled) {
         info(`Found line number range: ${currentStartLine}-${currentEndLine}`)
       }
       continue
@@ -987,7 +993,7 @@ ${review.comment}`
       currentStartLine = null
       currentEndLine = null
       currentComment = ''
-      if (debug) {
+      if (debugEnabled) {
         info('Found comment separator')
       }
       continue
