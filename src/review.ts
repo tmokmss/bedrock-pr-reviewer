@@ -605,7 +605,8 @@ ${commentChain}
         // perform review
         try {
           const [response] = await heavyBot.chat(
-            prompts.renderReviewFileDiff(ins)
+            prompts.renderReviewFileDiff(ins),
+            '{'
           )
           if (response === '') {
             info('review: nothing obtained from bedrock')

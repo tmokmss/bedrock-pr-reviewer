@@ -27,10 +27,10 @@ export class Bot {
     this.client = new BedrockRuntimeClient({})
   }
 
-  chat = async (message: string): Promise<[string, Ids]> => {
+  chat = async (message: string, prefix?: string): Promise<[string, Ids]> => {
     let res: [string, Ids] = ['', {}]
     try {
-      res = await this.chat_(message)
+      res = await this.chat_(message, prefix)
       return res
     } catch (e: unknown) {
       warning(`Failed to chat: ${e}`)
@@ -38,7 +38,10 @@ export class Bot {
     }
   }
 
-  private readonly chat_ = async (message: string): Promise<[string, Ids]> => {
+  private readonly chat_ = async (
+    message: string,
+    prefix?: string
+  ): Promise<[string, Ids]> => {
     // record timing
     const start = Date.now()
     if (!message) {
@@ -58,7 +61,7 @@ export class Bot {
             new InvokeModelCommand({
               modelId: this.bedrockOptions.model,
               body: JSON.stringify({
-                prompt: `\n\nHuman:${message}\n\nAssistant:`,
+                prompt: `\n\nHuman:${message}\n\nAssistant: ${prefix ?? ''}`,
                 temperature: 0,
                 // eslint-disable-next-line camelcase
                 top_p: 1,
@@ -99,6 +102,6 @@ export class Bot {
       parentMessageId: response?.$metadata.requestId,
       conversationId: response?.$metadata.cfId
     }
-    return [responseText, newIds]
+    return [prefix + responseText, newIds]
   }
 }

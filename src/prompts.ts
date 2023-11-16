@@ -84,7 +84,7 @@ $short_summary
 Input: New hunks annotated with line numbers and old hunks (replaced code). Hunks represent incomplete code fragments. Example input is in <example_input> tag below.
 Additional Context: <pull_request_title>, <pull_request_description>, <pull_request_changes> and comment chains. 
 Task: Review new hunks for substantive issues using provided context and respond with comments if necessary.
-Output: Review comments in markdown with exact line number ranges in new hunks. Start and end line numbers must be within the same hunk. For single-line comments, start=end line number. Must use output format in <example_output> tag below.
+Output: Review comments in markdown with exact line number ranges in new hunks. Start and end line numbers must be within the same hunk. For single-line comments, start=end line number. Must use JSON output format in <example_output> tag below.
 Use fenced code blocks using the relevant language identifier where applicable.
 Don't annotate code snippets with line numbers. Format and indent code correctly.
 Do not use \`suggestion\` code blocks.
@@ -129,14 +129,22 @@ Please review this change.
 </example_input>
 
 <example_output>
-22-22:
-There's a syntax error in the add function.
--    retrn z
-+    return z
----
-24-25:
-LGTM!
----
+{
+  "reviews": [
+    {
+      "line_start": 22,
+      "line_end": 22,
+      "comment": "There's a syntax error in the add function.
+  -    retrn z
+  +    return z",
+    },
+    {
+      "line_start": 24,
+      "line_end": 25,
+      "comment": "LGTM!",
+    }
+  ]
+}
 </example_output>
 
 ## Changes made to \`$filename\` for your review
