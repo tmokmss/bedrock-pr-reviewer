@@ -27,10 +27,7 @@ export const handleReviewComment = async (
   const commenter: Commenter = new Commenter()
   const inputs: Inputs = new Inputs()
 
-  if (
-    context.eventName !== 'pull_request_review_comment' &&
-    context.eventName !== 'issue_comment'
-  ) {
+  if (context.eventName !== 'pull_request_review_comment') {
     warning(
       `Skipped: ${context.eventName} is not a pull_request_review_comment event`
     )

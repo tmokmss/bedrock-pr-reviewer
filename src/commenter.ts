@@ -45,6 +45,8 @@ export const SHORT_SUMMARY_END_TAG = `-->
 export const COMMIT_ID_START_TAG = '<!-- commit_ids_reviewed_start -->'
 export const COMMIT_ID_END_TAG = '<!-- commit_ids_reviewed_end -->'
 
+const SELF_LOGIN = 'github-actions[bot]'
+
 export class Commenter {
   /**
    * @param mode Can be "create", "replace". Default is "replace".
@@ -496,13 +498,23 @@ ${chain}
     return allChains
   }
 
+  getRole(login: string) {
+    if (login === SELF_LOGIN) return '\n\nA: '
+    return '\n\nH: '
+  }
+
   async composeCommentChain(reviewComments: any[], topLevelComment: any) {
     const conversationChain = reviewComments
       .filter((cmt: any) => cmt.in_reply_to_id === topLevelComment.id)
-      .map((cmt: any) => `${cmt.user.login}: ${cmt.body}`)
+      .map(
+        (cmt: any) =>
+          `${this.getRole(cmt.user.login)}${cmt.user.login}: ${cmt.body}`
+      )
 
     conversationChain.unshift(
-      `${topLevelComment.user.login}: ${topLevelComment.body}`
+      `${this.getRole(topLevelComment.user.login)}${
+        topLevelComment.user.login
+      }: ${topLevelComment.body}`
     )
 
     return conversationChain.join('\n---\n')

@@ -2404,6 +2404,7 @@ const SHORT_SUMMARY_END_TAG = `-->
 <!-- end of auto-generated comment: short summary by AI reviewer -->`;
 const COMMIT_ID_START_TAG = '<!-- commit_ids_reviewed_start -->';
 const COMMIT_ID_END_TAG = '<!-- commit_ids_reviewed_end -->';
+const SELF_LOGIN = 'github-actions[bot]';
 class Commenter {
     /**
      * @param mode Can be "create", "replace". Default is "replace".
@@ -2744,11 +2745,16 @@ ${chain}
         }
         return allChains;
     }
+    getRole(login) {
+        if (login === SELF_LOGIN)
+            return '\n\nA: ';
+        return '\n\nH: ';
+    }
     async composeCommentChain(reviewComments, topLevelComment) {
         const conversationChain = reviewComments
             .filter((cmt) => cmt.in_reply_to_id === topLevelComment.id)
-            .map((cmt) => `${cmt.user.login}: ${cmt.body}`);
-        conversationChain.unshift(`${topLevelComment.user.login}: ${topLevelComment.body}`);
+            .map((cmt) => `${this.getRole(cmt.user.login)}${cmt.user.login}: ${cmt.body}`);
+        conversationChain.unshift(`${this.getRole(topLevelComment.user.login)}${topLevelComment.user.login}: ${topLevelComment.body}`);
         return conversationChain.join('\n---\n');
     }
     async getCommentChain(pullNumber, comment) {
@@ -5438,8 +5444,7 @@ const ASK_BOT = '@reviewbot';
 const handleReviewComment = async (heavyBot, options, prompts) => {
     const commenter = new _commenter__WEBPACK_IMPORTED_MODULE_2__/* .Commenter */ .Es();
     const inputs = new _inputs__WEBPACK_IMPORTED_MODULE_5__/* .Inputs */ .k();
-    if (context.eventName !== 'pull_request_review_comment' &&
-        context.eventName !== 'issue_comment') {
+    if (context.eventName !== 'pull_request_review_comment') {
         (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.warning)(`Skipped: ${context.eventName} is not a pull_request_review_comment event`);
         return;
     }
@@ -6351,11 +6356,13 @@ patches) {
     try {
         const rawReviews = JSON.parse(response).reviews;
         for (const r of rawReviews) {
-            reviews.push({
-                startLine: r.line_start,
-                endLine: r.line_end,
-                comment: r.comment
-            });
+            if (r.comment) {
+                reviews.push({
+                    startLine: r.line_start ?? 0,
+                    endLine: r.line_end ?? 0,
+                    comment: r.comment
+                });
+            }
         }
     }
     catch (e) {
