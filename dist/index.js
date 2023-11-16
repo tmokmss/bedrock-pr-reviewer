@@ -2316,7 +2316,7 @@ class Bot {
                 modelId: this.bedrockOptions.model,
                 body: JSON.stringify({
                     prompt: `\n\nHuman:${message}\n\nAssistant: ${prefix}`,
-                    temperature: 0.3,
+                    temperature: 0,
                     // eslint-disable-next-line camelcase
                     top_p: 0.9,
                     // eslint-disable-next-line camelcase
