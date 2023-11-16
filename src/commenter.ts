@@ -499,22 +499,20 @@ ${chain}
   }
 
   getRole(login: string) {
-    if (login === SELF_LOGIN) return '\n\nAssistant: '
-    return `\n\nHuman: (from @${login})`
+    if (login === SELF_LOGIN) return '\nA (You): '
+    return `\nH (@${login}):`
   }
 
   async composeCommentChain(reviewComments: any[], topLevelComment: any) {
     const conversationChain = reviewComments
       .filter((cmt: any) => cmt.in_reply_to_id === topLevelComment.id)
-      .map((cmt: any) => `${this.getRole(cmt.user.login)}: ${cmt.body}`)
+      .map((cmt: any) => `${this.getRole(cmt.user.login)} ${cmt.body}`)
 
     conversationChain.unshift(
-      `${this.getRole(topLevelComment.user.login)}: ${topLevelComment.body}`
+      `${this.getRole(topLevelComment.user.login)} ${topLevelComment.body}`
     )
 
-    return `Here is the last conversation we had: ${conversationChain.join(
-      ''
-    )}\n\nHuman: End of the last conversation. Now follow the above instruction.`
+    return `${conversationChain.join('\n')}`
   }
 
   async getCommentChain(pullNumber: number, comment: any) {
