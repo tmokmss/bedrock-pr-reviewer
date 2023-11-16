@@ -2300,7 +2300,7 @@ class Bot {
             return res;
         }
     };
-    chat_ = async (message, prefix) => {
+    chat_ = async (message, prefix = '') => {
         // record timing
         const start = Date.now();
         if (!message) {
@@ -2315,7 +2315,7 @@ class Bot {
             response = await pRetry(() => this.client.send(new dist_cjs.InvokeModelCommand({
                 modelId: this.bedrockOptions.model,
                 body: JSON.stringify({
-                    prompt: `\n\nHuman:${message}\n\nAssistant: ${prefix ?? ''}`,
+                    prompt: `\n\nHuman:${message}\n\nAssistant: ${prefix}`,
                     temperature: 0,
                     // eslint-disable-next-line camelcase
                     top_p: 1,

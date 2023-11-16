@@ -40,7 +40,7 @@ export class Bot {
 
   private readonly chat_ = async (
     message: string,
-    prefix?: string
+    prefix: string = ''
   ): Promise<[string, Ids]> => {
     // record timing
     const start = Date.now()
@@ -61,7 +61,7 @@ export class Bot {
             new InvokeModelCommand({
               modelId: this.bedrockOptions.model,
               body: JSON.stringify({
-                prompt: `\n\nHuman:${message}\n\nAssistant: ${prefix ?? ''}`,
+                prompt: `\n\nHuman:${message}\n\nAssistant: ${prefix}`,
                 temperature: 0,
                 // eslint-disable-next-line camelcase
                 top_p: 1,
