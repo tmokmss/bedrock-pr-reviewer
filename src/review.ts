@@ -862,11 +862,13 @@ function parseReview(
   try {
     const rawReviews = JSON.parse(response).reviews
     for (const r of rawReviews) {
-      reviews.push({
-        startLine: r.line_start,
-        endLine: r.line_end,
-        comment: r.comment
-      })
+      if (r.comment) {
+        reviews.push({
+          startLine: r.line_start ?? 0,
+          endLine: r.line_end ?? 0,
+          comment: r.comment
+        })
+      }
     }
   } catch (e: any) {
     error(e.message)
