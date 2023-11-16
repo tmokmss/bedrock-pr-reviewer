@@ -3136,7 +3136,8 @@ async function run() {
             process.env.GITHUB_EVENT_NAME === 'pull_request_target') {
             await (0,_review__WEBPACK_IMPORTED_MODULE_3__/* .codeReview */ .z)(lightBot, heavyBot, options, prompts);
         }
-        else if (process.env.GITHUB_EVENT_NAME === 'pull_request_review_comment') {
+        else if (process.env.GITHUB_EVENT_NAME === 'pull_request_review_comment' ||
+            process.env.GITHUB_EVENT_NAME === 'issue_comment') {
             await (0,_review_comment__WEBPACK_IMPORTED_MODULE_4__/* .handleReviewComment */ .V)(heavyBot, options, prompts);
         }
         else {

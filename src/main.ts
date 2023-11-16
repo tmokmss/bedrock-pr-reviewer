@@ -75,7 +75,8 @@ async function run(): Promise<void> {
     ) {
       await codeReview(lightBot, heavyBot, options, prompts)
     } else if (
-      process.env.GITHUB_EVENT_NAME === 'pull_request_review_comment'
+      process.env.GITHUB_EVENT_NAME === 'pull_request_review_comment' || 
+      process.env.GITHUB_EVENT_NAME === 'issue_comment'
     ) {
       await handleReviewComment(heavyBot, options, prompts)
     } else {
