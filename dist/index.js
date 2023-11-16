@@ -2289,10 +2289,10 @@ class Bot {
         this.bedrockOptions = bedrockOptions;
         this.client = new dist_cjs.BedrockRuntimeClient({});
     }
-    chat = async (message) => {
+    chat = async (message, prefix) => {
         let res = ['', {}];
         try {
-            res = await this.chat_(message);
+            res = await this.chat_(message, prefix);
             return res;
         }
         catch (e) {
@@ -2300,7 +2300,7 @@ class Bot {
             return res;
         }
     };
-    chat_ = async (message) => {
+    chat_ = async (message, prefix = '') => {
         // record timing
         const start = Date.now();
         if (!message) {
@@ -2315,14 +2315,14 @@ class Bot {
             response = await pRetry(() => this.client.send(new dist_cjs.InvokeModelCommand({
                 modelId: this.bedrockOptions.model,
                 body: JSON.stringify({
-                    prompt: `\n\nHuman:${message}\n\nAssistant:`,
+                    prompt: `\n\nHuman:${message}\n\nAssistant: ${prefix}`,
                     temperature: 0,
                     // eslint-disable-next-line camelcase
-                    top_p: 1,
+                    top_p: 0.9,
                     // eslint-disable-next-line camelcase
                     top_k: 250,
                     // eslint-disable-next-line camelcase
-                    max_tokens_to_sample: 200,
+                    max_tokens_to_sample: 4000,
                     // eslint-disable-next-line camelcase
                     stop_sequences: ['\n\nHuman:']
                 }),
@@ -2350,7 +2350,7 @@ class Bot {
             parentMessageId: response?.$metadata.requestId,
             conversationId: response?.$metadata.cfId
         };
-        return [responseText, newIds];
+        return [prefix + responseText, newIds];
     };
 }
 
@@ -2384,7 +2384,7 @@ class Bot {
 // eslint-disable-next-line camelcase
 const context = _actions_github__WEBPACK_IMPORTED_MODULE_1__.context;
 const repo = context.repo;
-const COMMENT_GREETING = `${(0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bot_icon')}   AI reviewer`;
+const COMMENT_GREETING = ''; //`${getInput('bot_icon')}`
 const COMMENT_TAG = '<!-- This is an auto-generated comment by AI reviewer -->';
 const COMMENT_REPLY_TAG = '<!-- This is an auto-generated reply by AI reviewer -->';
 const SUMMARIZE_TAG = '<!-- This is an auto-generated comment: summarize by AI reviewer -->';
@@ -2404,6 +2404,7 @@ const SHORT_SUMMARY_END_TAG = `-->
 <!-- end of auto-generated comment: short summary by AI reviewer -->`;
 const COMMIT_ID_START_TAG = '<!-- commit_ids_reviewed_start -->';
 const COMMIT_ID_END_TAG = '<!-- commit_ids_reviewed_end -->';
+const SELF_LOGIN = 'github-actions[bot]';
 class Commenter {
     /**
      * @param mode Can be "create", "replace". Default is "replace".
@@ -2744,12 +2745,17 @@ ${chain}
         }
         return allChains;
     }
+    getRole(login) {
+        if (login === SELF_LOGIN)
+            return '\nA (You): ';
+        return `\nH (@${login}):`;
+    }
     async composeCommentChain(reviewComments, topLevelComment) {
         const conversationChain = reviewComments
             .filter((cmt) => cmt.in_reply_to_id === topLevelComment.id)
-            .map((cmt) => `${cmt.user.login}: ${cmt.body}`);
-        conversationChain.unshift(`${topLevelComment.user.login}: ${topLevelComment.body}`);
-        return conversationChain.join('\n---\n');
+            .map((cmt) => `${this.getRole(cmt.user.login)} ${cmt.body}`);
+        conversationChain.unshift(`${this.getRole(topLevelComment.user.login)} ${topLevelComment.body}`);
+        return `${conversationChain.join('\n')}`;
     }
     async getCommentChain(pullNumber, comment) {
         try {
@@ -3018,6 +3024,7 @@ class Inputs {
     description;
     rawSummary;
     shortSummary;
+    reviewFileDiff;
     filename;
     fileContent;
     fileDiff;
@@ -3025,12 +3032,13 @@ class Inputs {
     diff;
     commentChain;
     comment;
-    constructor(systemMessage = '', title = 'no title provided', description = 'no description provided', rawSummary = '', shortSummary = '', filename = '', fileContent = 'file contents cannot be provided', fileDiff = 'file diff cannot be provided', patches = '', diff = 'no diff', commentChain = 'no other comments on this patch', comment = 'no comment provided') {
+    constructor(systemMessage = '', title = 'no title provided', description = 'no description provided', rawSummary = '', shortSummary = '', reviewFileDiff = '', filename = '', fileContent = 'file contents cannot be provided', fileDiff = 'file diff cannot be provided', patches = '', diff = 'no diff', commentChain = 'no other comments on this patch', comment = 'no comment provided') {
         this.systemMessage = systemMessage;
         this.title = title;
         this.description = description;
         this.rawSummary = rawSummary;
         this.shortSummary = shortSummary;
+        this.reviewFileDiff = reviewFileDiff;
         this.filename = filename;
         this.fileContent = fileContent;
         this.fileDiff = fileDiff;
@@ -3040,7 +3048,7 @@ class Inputs {
         this.comment = comment;
     }
     clone() {
-        return new Inputs(this.systemMessage, this.title, this.description, this.rawSummary, this.shortSummary, this.filename, this.fileContent, this.fileDiff, this.patches, this.diff, this.commentChain, this.comment);
+        return new Inputs(this.systemMessage, this.title, this.description, this.rawSummary, this.shortSummary, this.reviewFileDiff, this.filename, this.fileContent, this.fileDiff, this.patches, this.diff, this.commentChain, this.comment);
     }
     render(content) {
         if (!content) {
@@ -3060,6 +3068,9 @@ class Inputs {
         }
         if (this.shortSummary) {
             content = content.replace('$short_summary', this.shortSummary);
+        }
+        if (this.reviewFileDiff) {
+            content = content.replace('$review_file_diff', this.reviewFileDiff);
         }
         if (this.filename) {
             content = content.replace('$filename', this.filename);
@@ -3099,9 +3110,11 @@ __nccwpck_require__.r(__webpack_exports__);
 /* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _bot__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(78063);
 /* harmony import */ var _options__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(28870);
-/* harmony import */ var _prompts__WEBPACK_IMPORTED_MODULE_5__ = __nccwpck_require__(54272);
+/* harmony import */ var _prompts__WEBPACK_IMPORTED_MODULE_6__ = __nccwpck_require__(54272);
 /* harmony import */ var _review__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(22612);
 /* harmony import */ var _review_comment__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(55947);
+/* harmony import */ var _permission__WEBPACK_IMPORTED_MODULE_5__ = __nccwpck_require__(83552);
+
 
 
 
@@ -3109,10 +3122,10 @@ __nccwpck_require__.r(__webpack_exports__);
 
 
 async function run() {
-    const options = new _options__WEBPACK_IMPORTED_MODULE_2__/* .Options */ .Ei((0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('debug'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('disable_review'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('disable_release_notes'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('max_files'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('review_simple_changes'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('review_comment_lgtm'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getMultilineInput)('path_filters'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('system_message'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_light_model'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_heavy_model'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_model_temperature'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_retries'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_timeout_ms'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_concurrency_limit'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('github_concurrency_limit'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('language'));
+    const options = new _options__WEBPACK_IMPORTED_MODULE_2__/* .Options */ .Ei((0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('debug'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('disable_review'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('disable_release_notes'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('only_allow_collaborator'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('max_files'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('review_simple_changes'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('review_comment_lgtm'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getMultilineInput)('path_filters'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('system_message'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('review_file_diff'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_light_model'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_heavy_model'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_model_temperature'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_retries'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_timeout_ms'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_concurrency_limit'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('github_concurrency_limit'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('language'));
     // print options
     options.print();
-    const prompts = new _prompts__WEBPACK_IMPORTED_MODULE_5__/* .Prompts */ .j((0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('summarize'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('summarize_release_notes'));
+    const prompts = new _prompts__WEBPACK_IMPORTED_MODULE_6__/* .Prompts */ .j((0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('summarize'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('summarize_release_notes'));
     // Create two bots, one for summary and one for review
     let lightBot = null;
     try {
@@ -3131,6 +3144,16 @@ async function run() {
         return;
     }
     try {
+        if (process.env.GITHUB_ACTOR === undefined ||
+            process.env.GITHUB_REPOSITORY === undefined) {
+            (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.warning)('Skipped: required environment variables not found.');
+            return;
+        }
+        if (options.onlyAllowCollaborator &&
+            !(await (0,_permission__WEBPACK_IMPORTED_MODULE_5__/* .isCollaborator */ .m)(process.env.GITHUB_ACTOR, process.env.GITHUB_REPOSITORY))) {
+            (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.warning)(`Skipped: The user ${process.env.GITHUB_ACTOR} does not have collaborator access for the repository ${process.env.GITHUB_REPOSITORY}.`);
+            return;
+        }
         // check if the event is pull_request
         if (process.env.GITHUB_EVENT_NAME === 'pull_request' ||
             process.env.GITHUB_EVENT_NAME === 'pull_request_target') {
@@ -5024,11 +5047,13 @@ class Options {
     debug;
     disableReview;
     disableReleaseNotes;
+    onlyAllowCollaborator;
     maxFiles;
     reviewSimpleChanges;
     reviewCommentLGTM;
     pathFilters;
     systemMessage;
+    reviewFileDiff;
     bedrockLightModel;
     bedrockHeavyModel;
     bedrockModelTemperature;
@@ -5039,15 +5064,17 @@ class Options {
     lightTokenLimits;
     heavyTokenLimits;
     language;
-    constructor(debug, disableReview, disableReleaseNotes, maxFiles = '0', reviewSimpleChanges = false, reviewCommentLGTM = false, pathFilters = null, systemMessage = '', bedrockLightModel, bedrockHeavyModel, bedrockModelTemperature = '0.0', bedrockRetries = '3', bedrockTimeoutMS = '120000', bedrockConcurrencyLimit = '6', githubConcurrencyLimit = '6', language = 'en-US') {
+    constructor(debug, disableReview, disableReleaseNotes, onlyAllowCollaborator, maxFiles = '0', reviewSimpleChanges = false, reviewCommentLGTM = false, pathFilters = null, systemMessage = '', reviewFileDiff = '', bedrockLightModel, bedrockHeavyModel, bedrockModelTemperature = '0.0', bedrockRetries = '3', bedrockTimeoutMS = '120000', bedrockConcurrencyLimit = '6', githubConcurrencyLimit = '6', language = 'en-US') {
         this.debug = debug;
         this.disableReview = disableReview;
         this.disableReleaseNotes = disableReleaseNotes;
+        this.onlyAllowCollaborator = onlyAllowCollaborator;
         this.maxFiles = parseInt(maxFiles);
         this.reviewSimpleChanges = reviewSimpleChanges;
         this.reviewCommentLGTM = reviewCommentLGTM;
         this.pathFilters = new PathFilter(pathFilters);
         this.systemMessage = systemMessage;
+        this.reviewFileDiff = reviewFileDiff;
         this.bedrockLightModel = bedrockLightModel;
         this.bedrockHeavyModel = bedrockHeavyModel;
         this.bedrockModelTemperature = parseFloat(bedrockModelTemperature);
@@ -5064,11 +5091,13 @@ class Options {
         (0,core.info)(`debug: ${this.debug}`);
         (0,core.info)(`disable_review: ${this.disableReview}`);
         (0,core.info)(`disable_release_notes: ${this.disableReleaseNotes}`);
+        (0,core.info)(`only_allow_collaborator: ${this.onlyAllowCollaborator}`);
         (0,core.info)(`max_files: ${this.maxFiles}`);
         (0,core.info)(`review_simple_changes: ${this.reviewSimpleChanges}`);
         (0,core.info)(`review_comment_lgtm: ${this.reviewCommentLGTM}`);
         (0,core.info)(`path_filters: ${this.pathFilters}`);
         (0,core.info)(`system_message: ${this.systemMessage}`);
+        (0,core.info)(`review_file_diff: ${this.reviewFileDiff}`);
         (0,core.info)(`bedrock_light_model: ${this.bedrockLightModel}`);
         (0,core.info)(`bedrock_heavy_model: ${this.bedrockHeavyModel}`);
         (0,core.info)(`bedrock_model_temperature: ${this.bedrockModelTemperature}`);
@@ -5104,6 +5133,11 @@ class PathFilter {
             }
         }
     }
+    /**
+     * Returns true if the file should be processed, not ignored.
+     * If there is any inclusion rule set, a file is included when it matches any of inclusion rule.
+     * If there is no inclusion rule set, a file is included when it does not matches any of exclusion rule.
+     */
     check(path) {
         if (this.rules.length === 0) {
             return true;
@@ -5144,6 +5178,39 @@ class BedrockOptions {
 
 /***/ }),
 
+/***/ 83552:
+/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
+
+"use strict";
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   "m": () => (/* binding */ isCollaborator)
+/* harmony export */ });
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(42186);
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _octokit__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(83258);
+
+
+// https://stackoverflow.com/questions/27883893/github-api-how-to-check-if-user-has-write-access-to-a-repository
+const isCollaborator = async (user, repository) => {
+    const [owner, repo] = repository.split('/');
+    try {
+        const res = await _octokit__WEBPACK_IMPORTED_MODULE_1__/* .octokit.repos.checkCollaborator */ .K.repos.checkCollaborator({
+            owner,
+            repo,
+            username: user
+        });
+        return res.status === 204;
+    }
+    catch (e) {
+        // raise error on 404
+        (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.info)(`got error on isCollaborator ${e}}`);
+        return false;
+    }
+};
+
+
+/***/ }),
+
 /***/ 54272:
 /***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
 
@@ -5159,17 +5226,17 @@ I would like you to succinctly summarize the Pull Request within 100 words.
 The Pull Request is described with <title>, <description>, and <diff> tags.
 If applicable, your summary should include a note about alterations to the signatures of exported functions, global data structures and variables, and any changes that might affect the external interface or behavior of the code.
 
-<title>
+<pull_request_title>
 $title 
-</title>
+</pull_request_title>
 
-<description>
+<pull_request_description>
 $description
-</description>
+</pull_request_description>
 
-<diff>
+<pull_request_diff>
 $file_diff
-</diff>
+</pull_request_diff>
 `;
     triageFileDiff = `Below the summary, I would also like you to triage the diff as \`NEEDS_REVIEW\` or \`APPROVED\` based on the following criteria:
 
@@ -5214,39 +5281,37 @@ Instructions:
 - The summary should not exceed 500 words.
 `;
     reviewFileDiff = `
-<title>
+$system_message
+
+<pull_request_title>
 $title 
-</title>
+</pull_request_title>
 
-<description>
+<pull_request_description>
 $description
-</description>
+</pull_request_description>
 
-<changes>
+<pull_request_changes>
 $short_summary
-</changes>
+</pull_request_changes>
 
 ## IMPORTANT Instructions
 
-Input: New hunks annotated with line numbers and old hunks (replaced code). Hunks represent incomplete code fragments.
-Additional Context: <title>, <description>, <changes> and comment chains.
+Input: New hunks annotated with line numbers and old hunks (replaced code). Hunks represent incomplete code fragments. Example input is in <example_input> tag below.
+Additional Context: <pull_request_title>, <pull_request_description>, <pull_request_changes> and comment chains. 
 Task: Review new hunks for substantive issues using provided context and respond with comments if necessary.
-Output: Review comments in markdown with exact line number ranges in new hunks. Start and end line numbers must be within the same hunk. For single-line comments, start=end line number. Must use example response format below.
+Output: Review comments in markdown with exact line number ranges in new hunks. Start and end line numbers must be within the same hunk. For single-line comments, start=end line number. Must use JSON output format in <example_output> tag below.
 Use fenced code blocks using the relevant language identifier where applicable.
 Don't annotate code snippets with line numbers. Format and indent code correctly.
 Do not use \`suggestion\` code blocks.
 For fixes, use \`diff\` code blocks, marking changes with \`+\` or \`-\`. The line number range for comments with fix snippets must exactly match the range to replace in the new hunk.
 
-- Do NOT provide general feedback, summaries, explanations of changes, or praises for making good additions. 
-- Focus solely on offering specific, objective insights based on the given context and refrain from making broad comments about potential impacts on the system or question intentions behind the changes.
+$review_file_diff
 
-If there are no issues found on a line range, you MUST respond with the text \`LGTM!\` for that line range in the review section. 
+If there are no issues found on a line range, you MUST respond with the flag "lgtm": true in the response JSON. Don't stop with unfinished JSON. You MUST output a complete and proper JSON that can be parsed.
 
-<example>
-### Example changes
-
----new_hunk---
-<code>
+<example_input>
+<new_hunk>
   z = x / y
     return z
 
@@ -5254,15 +5319,15 @@ If there are no issues found on a line range, you MUST respond with the text \`L
 21:     z = x + y
 22:     retrn z
 23: 
+24: 
 24: def multiply(x, y):
 25:     return x * y
 
 def subtract(x, y):
   z = x - y
-</code>
+</new_hunk>
   
----old_hunk---
-<code>
+<old_hunk>
   z = x / y
     return z
 
@@ -5271,92 +5336,87 @@ def add(x, y):
 
 def subtract(x, y):
     z = x - y
-</code>
+</old_hunk>
 
----comment_chains---
+<comment_chains>
 \`\`\`
 Please review this change.
 \`\`\`
+</comment_chains>
+</example_input>
 
----end_change_section---
-
-### Example response
-
-22-22:
-There's a syntax error in the add function.
-<diff>
--    retrn z
-+    return z
-</diff>
----
-24-25:
-LGTM!
----
-</example>
+<example_output>
+{
+  "reviews": [
+    {
+      "line_start": 22,
+      "line_end": 22,
+      "comment": "There's a syntax error in the add function.\\n  -    retrn z\\n  +    return z",
+    },
+    {
+      "line_start": 23,
+      "line_end": 24,
+      "comment": "There's a redundant new line here. It should be only one.",
+    }
+  ],
+  "lgtm": false
+}
+</example_output>
 
 ## Changes made to \`$filename\` for your review
 
 $patches
 `;
-    comment = `A comment was made on a GitHub PR review for a 
-diff hunk on a file - \`$filename\`. I would like you to follow 
-the instructions in that comment. 
+    comment = `
+$system_message
 
-## GitHub PR Title
+A comment was made on a GitHub PR review for a diff hunk on a file - \`$filename\`. I would like you to follow the instructions in that comment. 
 
-\`$title\`
+<pull_request_title>
+$title 
+</pull_request_title>
 
-## Description
-
-\`\`\`
+<pull_request_description>
 $description
-\`\`\`
+</pull_request_description>
 
-## Summary generated by the AI bot
-
-\`\`\`
+<short_summary>
 $short_summary
-\`\`\`
+</short_summary>
 
-## Entire diff
-
-\`\`\`diff
+<entire_diff>
 $file_diff
-\`\`\`
+</entire_diff>
 
-## Diff being commented on
+Here is the diff that is now comment on.
 
-\`\`\`diff
+<partial_diff>
 $diff
-\`\`\`
+<partial_diff>
 
 ## Instructions
 
-Please reply directly to the new comment (instead of suggesting 
-a reply) and your reply will be posted as-is.
+Please reply directly to the new comment (instead of suggesting a reply) and your reply will be posted as-is.
 
 If the comment contains instructions/requests for you, please comply. 
-For example, if the comment is asking you to generate documentation 
-comments on the code, in your reply please generate the required code.
+For example, if the comment is asking you to generate documentation comments on the code, in your reply please generate the required code.
 
-In your reply, please make sure to begin the reply by tagging the user 
-with "@user".
+In your reply, please make sure to begin the reply by tagging the user with "@user".
 
-## Comment format
+<example>
+@username You are right. Thanks for the explanation!
+</example>
 
-\`user: comment\`
+Here is the comment history YOU and the users had. Note that H=human and A=you(assistant).
 
-## Comment chain (including the new comment)
-
-\`\`\`
+<history>
 $comment_chain
-\`\`\`
+</history>
 
-## The comment/request that you need to directly reply to
-
-\`\`\`
+This is the comment/request that you need to directly reply to
+<comment>
 $comment
-\`\`\`
+</comment>
 `;
     constructor(summarize = '', summarizeReleaseNotes = '') {
         this.summarize = summarize;
@@ -5420,7 +5480,7 @@ $comment
 // eslint-disable-next-line camelcase
 const context = _actions_github__WEBPACK_IMPORTED_MODULE_1__.context;
 const repo = context.repo;
-const ASK_BOT = '@reviewbot';
+const ASK_BOT = '/reviewbot';
 const handleReviewComment = async (heavyBot, options, prompts) => {
     const commenter = new _commenter__WEBPACK_IMPORTED_MODULE_2__/* .Commenter */ .Es();
     const inputs = new _inputs__WEBPACK_IMPORTED_MODULE_5__/* .Inputs */ .k();
@@ -5531,6 +5591,9 @@ const handleReviewComment = async (heavyBot, options, prompts) => {
                     inputs.shortSummary = shortSummary;
                 }
             }
+            inputs.commentChain = inputs.commentChain
+                .replace(_commenter__WEBPACK_IMPORTED_MODULE_2__/* .COMMENT_TAG */ .Rs, '')
+                .replace(_commenter__WEBPACK_IMPORTED_MODULE_2__/* .COMMENT_REPLY_TAG */ .aD, '');
             const [reply] = await heavyBot.chat(prompts.renderComment(inputs));
             await commenter.reviewCommentReply(pullNumber, topLevelComment, reply);
         }
@@ -5716,7 +5779,7 @@ var tokenizer = __nccwpck_require__(70652);
 // eslint-disable-next-line camelcase
 const context = github.context;
 const repo = context.repo;
-const ignoreKeyword = '@reviewbot: ignore';
+const ignoreKeyword = '/reviewbot: ignore';
 const codeReview = async (lightBot, heavyBot, options, prompts) => {
     const commenter = new lib_commenter/* Commenter */.Es();
     const bedrockConcurrencyLimit = pLimit(options.bedrockConcurrencyLimit);
@@ -5740,8 +5803,8 @@ const codeReview = async (lightBot, heavyBot, options, prompts) => {
         (0,core.info)('Skipped: description contains ignore_keyword');
         return;
     }
-    // as gpt-3.5-turbo isn't paying attention to system message, add to inputs for now
     inputs.systemMessage = options.systemMessage;
+    inputs.reviewFileDiff = options.reviewFileDiff;
     // get SUMMARIZE_TAG message
     const existingSummarizeCmt = await commenter.findCommentWithTag(lib_commenter/* SUMMARIZE_TAG */.Rp, context.payload.pull_request.number);
     let existingCommitIdsBlock = '';
@@ -5855,15 +5918,17 @@ const codeReview = async (lightBot, heavyBot, options, prompts) => {
                 continue;
             }
             const hunksStr = `
----new_hunk---
+<new_hunk>
 \`\`\`
 ${hunks.newHunk}
 \`\`\`
+</new_hunk>
 
----old_hunk---
+<old_hunk>
 \`\`\`
 ${hunks.oldHunk}
 \`\`\`
+</old_hunk>
 `;
             patches.push([
                 patchLines.newHunk.startLine,
@@ -6010,7 +6075,7 @@ ${filename}: ${summary}
             (0,core.info)('release notes: nothing obtained from bedrock');
         }
         else {
-            let message = '### Summary by AI reviewer\n\n';
+            let message = '### Summary (generated)\n\n';
             message += releaseNotesResponse;
             try {
                 await commenter.updateDescription(context.payload.pull_request.number, message);
@@ -6123,27 +6188,25 @@ ${patch}
 `;
                 if (commentChain !== '') {
                     ins.patches += `
----comment_chains---
+<comment_chains>
 \`\`\`
 ${commentChain}
 \`\`\`
+</comment_chains>
 `;
                 }
-                ins.patches += `
----end_change_section---
-`;
             }
             if (patchesPacked > 0) {
                 // perform review
                 try {
-                    const [response] = await heavyBot.chat(prompts.renderReviewFileDiff(ins));
+                    const [response] = await heavyBot.chat(prompts.renderReviewFileDiff(ins), '{');
                     if (response === '') {
                         (0,core.info)('review: nothing obtained from bedrock');
                         reviewsFailed.push(`${filename} (no response)`);
                         return;
                     }
                     // parse review
-                    const reviews = parseReview(response, patches, options.debug);
+                    const reviews = parseReview(response, patches);
                     for (const review of reviews) {
                         // check for LGTM
                         if (!options.reviewCommentLGTM &&
@@ -6218,16 +6281,16 @@ ${reviewsSkipped.length > 0
 <details>
 <summary>Tips</summary>
 
-### Chat with <img src="https://avatars.githubusercontent.com/in/347564?s=41&u=fad245b8b4c7254fe63dd4dcd4d662ace122757e&v=4" alt="Image description" width="20" height="20">  AI reviewer (\`@reviewbot\`)
+### Chat with AI reviewer (\`/reviewbot\`)
 - Reply on review comments left by this bot to ask follow-up questions. A review comment is a comment on a diff or a file.
-- Invite the bot into a review comment chain by tagging \`@reviewbot\` in a reply.
+- Invite the bot into a review comment chain by tagging \`/reviewbot\` in a reply.
 
 ### Code suggestions
 - The bot may make code suggestions, but please review them carefully before committing since the line number ranges may be misaligned. 
 - You can edit the comment made by the bot and manually tweak the suggestion if it is slightly off.
 
 ### Pausing incremental reviews
-- Add \`@reviewbot: ignore\` anywhere in the PR description to pause further reviews from the bot.
+- Add \`/reviewbot: ignore\` anywhere in the PR description to pause further reviews from the bot.
 
 </details>
 `;
@@ -6329,114 +6392,26 @@ const parsePatch = (patch) => {
         newHunk: newHunkLines.join('\n')
     };
 };
-function parseReview(response, patches, debug = false) {
+function parseReview(response, 
+// eslint-disable-next-line no-unused-vars
+patches) {
     const reviews = [];
-    response = sanitizeResponse(response.trim());
-    const lines = response.split('\n');
-    const lineNumberRangeRegex = /(?:^|\s)(\d+)-(\d+):\s*$/;
-    const commentSeparator = '---';
-    let currentStartLine = null;
-    let currentEndLine = null;
-    let currentComment = '';
-    function storeReview() {
-        if (currentStartLine !== null && currentEndLine !== null) {
-            const review = {
-                startLine: currentStartLine,
-                endLine: currentEndLine,
-                comment: currentComment
-            };
-            let withinPatch = false;
-            let bestPatchStartLine = -1;
-            let bestPatchEndLine = -1;
-            let maxIntersection = 0;
-            for (const [startLine, endLine] of patches) {
-                const intersectionStart = Math.max(review.startLine, startLine);
-                const intersectionEnd = Math.min(review.endLine, endLine);
-                const intersectionLength = Math.max(0, intersectionEnd - intersectionStart + 1);
-                if (intersectionLength > maxIntersection) {
-                    maxIntersection = intersectionLength;
-                    bestPatchStartLine = startLine;
-                    bestPatchEndLine = endLine;
-                    withinPatch =
-                        intersectionLength === review.endLine - review.startLine + 1;
-                }
-                if (withinPatch)
-                    break;
+    try {
+        const rawReviews = JSON.parse(response).reviews;
+        for (const r of rawReviews) {
+            if (r.comment) {
+                reviews.push({
+                    startLine: r.line_start ?? 0,
+                    endLine: r.line_end ?? 0,
+                    comment: r.comment
+                });
             }
-            if (!withinPatch) {
-                if (bestPatchStartLine !== -1 && bestPatchEndLine !== -1) {
-                    review.comment = `> Note: This review was outside of the patch, so it was mapped to the patch with the greatest overlap. Original lines [${review.startLine}-${review.endLine}]
-
-${review.comment}`;
-                    review.startLine = bestPatchStartLine;
-                    review.endLine = bestPatchEndLine;
-                }
-                else {
-                    review.comment = `> Note: This review was outside of the patch, but no patch was found that overlapped with it. Original lines [${review.startLine}-${review.endLine}]
-
-${review.comment}`;
-                    review.startLine = patches[0][0];
-                    review.endLine = patches[0][1];
-                }
-            }
-            reviews.push(review);
-            (0,core.info)(`Stored comment for line range ${currentStartLine}-${currentEndLine}: ${currentComment.trim()}`);
         }
     }
-    function sanitizeCodeBlock(comment, codeBlockLabel) {
-        const codeBlockStart = `\`\`\`${codeBlockLabel}`;
-        const codeBlockEnd = '```';
-        const lineNumberRegex = /^ *(\d+): /gm;
-        let codeBlockStartIndex = comment.indexOf(codeBlockStart);
-        while (codeBlockStartIndex !== -1) {
-            const codeBlockEndIndex = comment.indexOf(codeBlockEnd, codeBlockStartIndex + codeBlockStart.length);
-            if (codeBlockEndIndex === -1)
-                break;
-            const codeBlock = comment.substring(codeBlockStartIndex + codeBlockStart.length, codeBlockEndIndex);
-            const sanitizedBlock = codeBlock.replace(lineNumberRegex, '');
-            comment =
-                comment.slice(0, codeBlockStartIndex + codeBlockStart.length) +
-                    sanitizedBlock +
-                    comment.slice(codeBlockEndIndex);
-            codeBlockStartIndex = comment.indexOf(codeBlockStart, codeBlockStartIndex +
-                codeBlockStart.length +
-                sanitizedBlock.length +
-                codeBlockEnd.length);
-        }
-        return comment;
+    catch (e) {
+        (0,core.error)(e.message);
+        return [];
     }
-    function sanitizeResponse(comment) {
-        comment = sanitizeCodeBlock(comment, 'suggestion');
-        comment = sanitizeCodeBlock(comment, 'diff');
-        return comment;
-    }
-    for (const line of lines) {
-        const lineNumberRangeMatch = line.match(lineNumberRangeRegex);
-        if (lineNumberRangeMatch != null) {
-            storeReview();
-            currentStartLine = parseInt(lineNumberRangeMatch[1], 10);
-            currentEndLine = parseInt(lineNumberRangeMatch[2], 10);
-            currentComment = '';
-            if (debug) {
-                (0,core.info)(`Found line number range: ${currentStartLine}-${currentEndLine}`);
-            }
-            continue;
-        }
-        if (line.trim() === commentSeparator) {
-            storeReview();
-            currentStartLine = null;
-            currentEndLine = null;
-            currentComment = '';
-            if (debug) {
-                (0,core.info)('Found comment separator');
-            }
-            continue;
-        }
-        if (currentStartLine !== null && currentEndLine !== null) {
-            currentComment += `${line}\n`;
-        }
-    }
-    storeReview();
     return reviews;
 }
 

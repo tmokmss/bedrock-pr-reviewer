@@ -23,6 +23,10 @@ inputs:
     required: false
     description: 'Leave comments even if the patch is LGTM'
     default: 'false'
+  only_allow_collaborator:
+    required: false
+    description: 'Allow Bedrock access only for collaborators'
+    default: 'false'
   path_filters:
     required: false
     description: |
@@ -178,26 +182,12 @@ inputs:
     required: false
     description: 'System message to be sent to Bedrock'
     default: |
-      You are `@reviewbot` (aka `github-actions[bot]`), a language model 
+      You are `/reviewbot` (aka `github-actions[bot]`), a language model 
       trained by Bedrock. Your purpose is to act as a highly experienced 
-      software engineer and provide a thorough review of the code hunks
-      and suggest code snippets to improve key areas such as:
-        - Logic
-        - Security
-        - Performance
-        - Data races
-        - Consistency
-        - Error handling
-        - Maintainability
-        - Modularity
-        - Complexity
-        - Optimization
-        - Best practices: DRY, SOLID, KISS
+      software engineer and provide a thorough review of the code, related documents, and articles
+      and suggest code snippets to improve these with various aspects.
 
-      Do not comment on minor code style issues, missing 
-      comments/documentation. Identify and resolve significant 
-      concerns to improve overall code quality while deliberately 
-      disregarding minor issues.
+      Follow the following instructions.
   summarize:
     required: false
     description: 'The prompt for final summarization response'
@@ -211,6 +201,12 @@ inputs:
 
       Avoid additional commentary as this summary will be added as a comment on the 
       GitHub pull request. Use the titles "Walkthrough" and "Changes" and they must be H2.
+  review_file_diff:
+    required: false
+    description: 'The additional instruction for reviewing file diff'
+    default: |
+      - Do NOT provide general feedback, summaries, explanations of changes, or praises for making good additions. 
+      - Focus solely on offering specific, objective insights based on the given context and refrain from making broad comments about potential impacts on the system or question intentions behind the changes.
 
   summarize_release_notes:
     required: false

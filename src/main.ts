@@ -10,17 +10,20 @@ import {BedrockOptions, Options} from './options'
 import {Prompts} from './prompts'
 import {codeReview} from './review'
 import {handleReviewComment} from './review-comment'
+import {isCollaborator} from './permission'
 
 async function run(): Promise<void> {
   const options: Options = new Options(
     getBooleanInput('debug'),
     getBooleanInput('disable_review'),
     getBooleanInput('disable_release_notes'),
+    getBooleanInput('only_allow_collaborator'),
     getInput('max_files'),
     getBooleanInput('review_simple_changes'),
     getBooleanInput('review_comment_lgtm'),
     getMultilineInput('path_filters'),
     getInput('system_message'),
+    getInput('review_file_diff'),
     getInput('bedrock_light_model'),
     getInput('bedrock_heavy_model'),
     getInput('bedrock_model_temperature'),
@@ -68,6 +71,25 @@ async function run(): Promise<void> {
   }
 
   try {
+    if (
+      process.env.GITHUB_ACTOR === undefined ||
+      process.env.GITHUB_REPOSITORY === undefined
+    ) {
+      warning('Skipped: required environment variables not found.')
+      return
+    }
+    if (
+      options.onlyAllowCollaborator &&
+      !(await isCollaborator(
+        process.env.GITHUB_ACTOR,
+        process.env.GITHUB_REPOSITORY
+      ))
+    ) {
+      warning(
+        `Skipped: The user ${process.env.GITHUB_ACTOR} does not have collaborator access for the repository ${process.env.GITHUB_REPOSITORY}.`
+      )
+      return
+    }
     // check if the event is pull_request
     if (
       process.env.GITHUB_EVENT_NAME === 'pull_request' ||

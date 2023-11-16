@@ -6,11 +6,13 @@ export class Options {
   debug: boolean
   disableReview: boolean
   disableReleaseNotes: boolean
+  onlyAllowCollaborator: boolean
   maxFiles: number
   reviewSimpleChanges: boolean
   reviewCommentLGTM: boolean
   pathFilters: PathFilter
   systemMessage: string
+  reviewFileDiff: string
   bedrockLightModel: string
   bedrockHeavyModel: string
   bedrockModelTemperature: number
@@ -26,11 +28,13 @@ export class Options {
     debug: boolean,
     disableReview: boolean,
     disableReleaseNotes: boolean,
+    onlyAllowCollaborator: boolean,
     maxFiles = '0',
     reviewSimpleChanges = false,
     reviewCommentLGTM = false,
     pathFilters: string[] | null = null,
     systemMessage = '',
+    reviewFileDiff = '',
     bedrockLightModel: string,
     bedrockHeavyModel: string,
     bedrockModelTemperature = '0.0',
@@ -43,11 +47,13 @@ export class Options {
     this.debug = debug
     this.disableReview = disableReview
     this.disableReleaseNotes = disableReleaseNotes
+    this.onlyAllowCollaborator = onlyAllowCollaborator
     this.maxFiles = parseInt(maxFiles)
     this.reviewSimpleChanges = reviewSimpleChanges
     this.reviewCommentLGTM = reviewCommentLGTM
     this.pathFilters = new PathFilter(pathFilters)
     this.systemMessage = systemMessage
+    this.reviewFileDiff = reviewFileDiff
     this.bedrockLightModel = bedrockLightModel
     this.bedrockHeavyModel = bedrockHeavyModel
     this.bedrockModelTemperature = parseFloat(bedrockModelTemperature)
@@ -65,11 +71,13 @@ export class Options {
     info(`debug: ${this.debug}`)
     info(`disable_review: ${this.disableReview}`)
     info(`disable_release_notes: ${this.disableReleaseNotes}`)
+    info(`only_allow_collaborator: ${this.onlyAllowCollaborator}`)
     info(`max_files: ${this.maxFiles}`)
     info(`review_simple_changes: ${this.reviewSimpleChanges}`)
     info(`review_comment_lgtm: ${this.reviewCommentLGTM}`)
     info(`path_filters: ${this.pathFilters}`)
     info(`system_message: ${this.systemMessage}`)
+    info(`review_file_diff: ${this.reviewFileDiff}`)
     info(`bedrock_light_model: ${this.bedrockLightModel}`)
     info(`bedrock_heavy_model: ${this.bedrockHeavyModel}`)
     info(`bedrock_model_temperature: ${this.bedrockModelTemperature}`)
@@ -108,6 +116,11 @@ export class PathFilter {
     }
   }
 
+  /**
+   * Returns true if the file should be processed, not ignored.
+   * If there is any inclusion rule set, a file is included when it matches any of inclusion rule.
+   * If there is no inclusion rule set, a file is included when it does not matches any of exclusion rule.
+   */
   check(path: string): boolean {
     if (this.rules.length === 0) {
       return true

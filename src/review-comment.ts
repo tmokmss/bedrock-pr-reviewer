@@ -17,7 +17,7 @@ import {getTokenCount} from './tokenizer'
 // eslint-disable-next-line camelcase
 const context = github_context
 const repo = context.repo
-const ASK_BOT = '@reviewbot'
+const ASK_BOT = '/reviewbot'
 
 export const handleReviewComment = async (
   heavyBot: Bot,
@@ -171,6 +171,10 @@ export const handleReviewComment = async (
           inputs.shortSummary = shortSummary
         }
       }
+
+      inputs.commentChain = inputs.commentChain
+        .replace(COMMENT_TAG, '')
+        .replace(COMMENT_REPLY_TAG, '')
 
       const [reply] = await heavyBot.chat(prompts.renderComment(inputs))
 

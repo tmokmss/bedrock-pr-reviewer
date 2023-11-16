@@ -1,4 +1,4 @@
-import {getInput, info, warning} from '@actions/core'
+import {info, warning} from '@actions/core'
 // eslint-disable-next-line camelcase
 import {context as github_context} from '@actions/github'
 import {octokit} from './octokit'
@@ -7,7 +7,7 @@ import {octokit} from './octokit'
 const context = github_context
 const repo = context.repo
 
-export const COMMENT_GREETING = `${getInput('bot_icon')}   AI reviewer`
+export const COMMENT_GREETING = '' //`${getInput('bot_icon')}`
 
 export const COMMENT_TAG =
   '<!-- This is an auto-generated comment by AI reviewer -->'
@@ -44,6 +44,8 @@ export const SHORT_SUMMARY_END_TAG = `-->
 
 export const COMMIT_ID_START_TAG = '<!-- commit_ids_reviewed_start -->'
 export const COMMIT_ID_END_TAG = '<!-- commit_ids_reviewed_end -->'
+
+const SELF_LOGIN = 'github-actions[bot]'
 
 export class Commenter {
   /**
@@ -496,16 +498,21 @@ ${chain}
     return allChains
   }
 
+  getRole(login: string) {
+    if (login === SELF_LOGIN) return '\nA (You): '
+    return `\nH (@${login}):`
+  }
+
   async composeCommentChain(reviewComments: any[], topLevelComment: any) {
     const conversationChain = reviewComments
       .filter((cmt: any) => cmt.in_reply_to_id === topLevelComment.id)
-      .map((cmt: any) => `${cmt.user.login}: ${cmt.body}`)
+      .map((cmt: any) => `${this.getRole(cmt.user.login)} ${cmt.body}`)
 
     conversationChain.unshift(
-      `${topLevelComment.user.login}: ${topLevelComment.body}`
+      `${this.getRole(topLevelComment.user.login)} ${topLevelComment.body}`
     )
 
-    return conversationChain.join('\n---\n')
+    return `${conversationChain.join('\n')}`
   }
 
   async getCommentChain(pullNumber: number, comment: any) {
