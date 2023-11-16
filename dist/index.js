@@ -2316,9 +2316,9 @@ class Bot {
                 modelId: this.bedrockOptions.model,
                 body: JSON.stringify({
                     prompt: `\n\nHuman:${message}\n\nAssistant: ${prefix}`,
-                    temperature: 0,
+                    temperature: 0.3,
                     // eslint-disable-next-line camelcase
-                    top_p: 1,
+                    top_p: 0.9,
                     // eslint-disable-next-line camelcase
                     top_k: 250,
                     // eslint-disable-next-line camelcase
@@ -5253,7 +5253,7 @@ For fixes, use \`diff\` code blocks, marking changes with \`+\` or \`-\`. The li
 
 $review_file_diff
 
-If there are no issues found on a line range, you MUST respond with the flag "lgtm": true in the response JSON. 
+If there are no issues found on a line range, you MUST respond with the flag "lgtm": true in the response JSON. Don't stop with unfinished JSON. you MUST output a complete and proper JSON that can be parsed.
 
 <example_input>
 <new_hunk>
