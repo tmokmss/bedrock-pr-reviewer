@@ -613,7 +613,7 @@ ${commentChain}
             return
           }
           // parse review
-          const reviews = parseReview(response, patches, options.debug)
+          const reviews = parseReview(response, patches)
           for (const review of reviews) {
             // check for LGTM
             if (
@@ -854,157 +854,24 @@ interface Review {
 
 function parseReview(
   response: string,
-  patches: Array<[number, number, string]>,
-  debugEnabled = false
+  // eslint-disable-next-line no-unused-vars
+  patches: Array<[number, number, string]>
 ): Review[] {
   const reviews: Review[] = []
 
   try {
-    debug(JSON.parse(response))
+    const rawReviews = JSON.parse(response).reviews
+    for (const r of rawReviews) {
+      reviews.push({
+        startLine: r.line_start,
+        endLine: r.line_end,
+        comment: r.comment
+      })
+    }
   } catch (e: any) {
     error(e.message)
+    return []
   }
-
-  response = sanitizeResponse(response.trim())
-
-  const lines = response.split('\n')
-  const lineNumberRangeRegex = /(?:^|\s)(\d+)-(\d+):\s*$/
-  const commentSeparator = '---'
-
-  let currentStartLine: number | null = null
-  let currentEndLine: number | null = null
-  let currentComment = ''
-  function storeReview(): void {
-    if (currentStartLine !== null && currentEndLine !== null) {
-      const review: Review = {
-        startLine: currentStartLine,
-        endLine: currentEndLine,
-        comment: currentComment
-      }
-
-      let withinPatch = false
-      let bestPatchStartLine = -1
-      let bestPatchEndLine = -1
-      let maxIntersection = 0
-
-      for (const [startLine, endLine] of patches) {
-        const intersectionStart = Math.max(review.startLine, startLine)
-        const intersectionEnd = Math.min(review.endLine, endLine)
-        const intersectionLength = Math.max(
-          0,
-          intersectionEnd - intersectionStart + 1
-        )
-
-        if (intersectionLength > maxIntersection) {
-          maxIntersection = intersectionLength
-          bestPatchStartLine = startLine
-          bestPatchEndLine = endLine
-          withinPatch =
-            intersectionLength === review.endLine - review.startLine + 1
-        }
-
-        if (withinPatch) break
-      }
-
-      if (!withinPatch) {
-        if (bestPatchStartLine !== -1 && bestPatchEndLine !== -1) {
-          review.comment = `> Note: This review was outside of the patch, so it was mapped to the patch with the greatest overlap. Original lines [${review.startLine}-${review.endLine}]
-
-${review.comment}`
-          review.startLine = bestPatchStartLine
-          review.endLine = bestPatchEndLine
-        } else {
-          review.comment = `> Note: This review was outside of the patch, but no patch was found that overlapped with it. Original lines [${review.startLine}-${review.endLine}]
-
-${review.comment}`
-          review.startLine = patches[0][0]
-          review.endLine = patches[0][1]
-        }
-      }
-
-      reviews.push(review)
-
-      info(
-        `Stored comment for line range ${currentStartLine}-${currentEndLine}: ${currentComment.trim()}`
-      )
-    }
-  }
-
-  function sanitizeCodeBlock(comment: string, codeBlockLabel: string): string {
-    const codeBlockStart = `\`\`\`${codeBlockLabel}`
-    const codeBlockEnd = '```'
-    const lineNumberRegex = /^ *(\d+): /gm
-
-    let codeBlockStartIndex = comment.indexOf(codeBlockStart)
-
-    while (codeBlockStartIndex !== -1) {
-      const codeBlockEndIndex = comment.indexOf(
-        codeBlockEnd,
-        codeBlockStartIndex + codeBlockStart.length
-      )
-
-      if (codeBlockEndIndex === -1) break
-
-      const codeBlock = comment.substring(
-        codeBlockStartIndex + codeBlockStart.length,
-        codeBlockEndIndex
-      )
-      const sanitizedBlock = codeBlock.replace(lineNumberRegex, '')
-
-      comment =
-        comment.slice(0, codeBlockStartIndex + codeBlockStart.length) +
-        sanitizedBlock +
-        comment.slice(codeBlockEndIndex)
-
-      codeBlockStartIndex = comment.indexOf(
-        codeBlockStart,
-        codeBlockStartIndex +
-          codeBlockStart.length +
-          sanitizedBlock.length +
-          codeBlockEnd.length
-      )
-    }
-
-    return comment
-  }
-
-  function sanitizeResponse(comment: string): string {
-    comment = sanitizeCodeBlock(comment, 'suggestion')
-    comment = sanitizeCodeBlock(comment, 'diff')
-    return comment
-  }
-
-  for (const line of lines) {
-    const lineNumberRangeMatch = line.match(lineNumberRangeRegex)
-
-    if (lineNumberRangeMatch != null) {
-      storeReview()
-      currentStartLine = parseInt(lineNumberRangeMatch[1], 10)
-      currentEndLine = parseInt(lineNumberRangeMatch[2], 10)
-      currentComment = ''
-      if (debugEnabled) {
-        info(`Found line number range: ${currentStartLine}-${currentEndLine}`)
-      }
-      continue
-    }
-
-    if (line.trim() === commentSeparator) {
-      storeReview()
-      currentStartLine = null
-      currentEndLine = null
-      currentComment = ''
-      if (debugEnabled) {
-        info('Found comment separator')
-      }
-      continue
-    }
-
-    if (currentStartLine !== null && currentEndLine !== null) {
-      currentComment += `${line}\n`
-    }
-  }
-
-  storeReview()
 
   return reviews
 }

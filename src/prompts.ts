@@ -92,7 +92,7 @@ For fixes, use \`diff\` code blocks, marking changes with \`+\` or \`-\`. The li
 
 $review_file_diff
 
-If there are no issues found on a line range, you MUST respond with the flag "lgtm": true in the response JSON. Don't stop with unfinished JSON. you MUST output a complete and proper JSON that can be parsed.
+If there are no issues found on a line range, please respond with an empty array i.e. \`"reviews": []\`. Don't stop with unfinished JSON. You MUST output a complete and proper JSON that can be parsed.
 
 <example_input>
 <new_hunk>
@@ -142,8 +142,7 @@ Please review this change.
       "line_end": 24,
       "comment": "There's a redundant new line here. It should be only one.",
     }
-  ],
-  "lgtm": false
+  ]
 }
 </example_output>
 
