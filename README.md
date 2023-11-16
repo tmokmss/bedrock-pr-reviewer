@@ -114,7 +114,7 @@ value. For example, to review docs/blog posts, you can use the following prompt:
 
 ```yaml
 system_message: |
-  You are `@reviewbot` (aka `github-actions[bot]`), a language model
+  You are `/reviewbot` (aka `github-actions[bot]`), a language model
   trained by Bedrock. Your purpose is to act as a highly experienced
   DevRel (developer relations) professional with focus on cloud-native
   infrastructure.
@@ -145,11 +145,11 @@ system_message: |
 
 You can reply to a review comment made by this action and get a response based
 on the diff context. Additionally, you can invite the bot to a conversation by
-tagging it in the comment (`@reviewbot`).
+tagging it in the comment (`/reviewbot`).
 
 Example:
 
-> @reviewbot Please generate a test plan for this file.
+> /reviewbot Please generate a test plan for this file.
 
 Note: A review comment is a comment made on a diff or a file in the pull
 request.
@@ -161,7 +161,7 @@ to review documentation, you can ignore PRs that only change the documentation.
 To ignore a PR, add the following keyword in the PR description:
 
 ```text
-@reviewbot: ignore
+/reviewbot: ignore
 ```
 
 ## Examples

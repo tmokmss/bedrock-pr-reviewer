@@ -5433,7 +5433,7 @@ $comment
 // eslint-disable-next-line camelcase
 const context = _actions_github__WEBPACK_IMPORTED_MODULE_1__.context;
 const repo = context.repo;
-const ASK_BOT = '@reviewbot';
+const ASK_BOT = '/reviewbot';
 const handleReviewComment = async (heavyBot, options, prompts) => {
     const commenter = new _commenter__WEBPACK_IMPORTED_MODULE_2__/* .Commenter */ .Es();
     const inputs = new _inputs__WEBPACK_IMPORTED_MODULE_5__/* .Inputs */ .k();
@@ -5732,7 +5732,7 @@ var tokenizer = __nccwpck_require__(70652);
 // eslint-disable-next-line camelcase
 const context = github.context;
 const repo = context.repo;
-const ignoreKeyword = '@reviewbot: ignore';
+const ignoreKeyword = '/reviewbot: ignore';
 const codeReview = async (lightBot, heavyBot, options, prompts) => {
     const commenter = new lib_commenter/* Commenter */.Es();
     const bedrockConcurrencyLimit = pLimit(options.bedrockConcurrencyLimit);
@@ -6234,16 +6234,16 @@ ${reviewsSkipped.length > 0
 <details>
 <summary>Tips</summary>
 
-### Chat with AI reviewer (\`@reviewbot\`)
+### Chat with AI reviewer (\`/reviewbot\`)
 - Reply on review comments left by this bot to ask follow-up questions. A review comment is a comment on a diff or a file.
-- Invite the bot into a review comment chain by tagging \`@reviewbot\` in a reply.
+- Invite the bot into a review comment chain by tagging \`/reviewbot\` in a reply.
 
 ### Code suggestions
 - The bot may make code suggestions, but please review them carefully before committing since the line number ranges may be misaligned. 
 - You can edit the comment made by the bot and manually tweak the suggestion if it is slightly off.
 
 ### Pausing incremental reviews
-- Add \`@reviewbot: ignore\` anywhere in the PR description to pause further reviews from the bot.
+- Add \`/reviewbot: ignore\` anywhere in the PR description to pause further reviews from the bot.
 
 </details>
 `;
