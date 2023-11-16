@@ -2384,7 +2384,7 @@ class Bot {
 // eslint-disable-next-line camelcase
 const context = _actions_github__WEBPACK_IMPORTED_MODULE_1__.context;
 const repo = context.repo;
-const COMMENT_GREETING = `${(0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bot_icon')}   AI reviewer`;
+const COMMENT_GREETING = `${(0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bot_icon')}`;
 const COMMENT_TAG = '<!-- This is an auto-generated comment by AI reviewer -->';
 const COMMENT_REPLY_TAG = '<!-- This is an auto-generated reply by AI reviewer -->';
 const SUMMARIZE_TAG = '<!-- This is an auto-generated comment: summarize by AI reviewer -->';
@@ -5104,6 +5104,11 @@ class PathFilter {
             }
         }
     }
+    /**
+     * Returns true if the file should be processed, not ignored.
+     * If there is any inclusion rule set, a file is included when it matches any of inclusion rule.
+     * If there is no inclusion rule set, a file is included when it does not matches any of exclusion rule.
+     */
     check(path) {
         if (this.rules.length === 0) {
             return true;
@@ -5159,17 +5164,17 @@ I would like you to succinctly summarize the Pull Request within 100 words.
 The Pull Request is described with <title>, <description>, and <diff> tags.
 If applicable, your summary should include a note about alterations to the signatures of exported functions, global data structures and variables, and any changes that might affect the external interface or behavior of the code.
 
-<title>
+<pull_request_title>
 $title 
-</title>
+</pull_request_title>
 
-<description>
+<pull_request_description>
 $description
-</description>
+</pull_request_description>
 
-<diff>
+<pull_request_diff>
 $file_diff
-</diff>
+</pull_request_diff>
 `;
     triageFileDiff = `Below the summary, I would also like you to triage the diff as \`NEEDS_REVIEW\` or \`APPROVED\` based on the following criteria:
 
@@ -5214,17 +5219,17 @@ Instructions:
 - The summary should not exceed 500 words.
 `;
     reviewFileDiff = `
-<title>
+<pull_request_title>
 $title 
-</title>
+</pull_request_title>
 
-<description>
+<pull_request_description>
 $description
-</description>
+</pull_request_description>
 
-<changes>
+<pull_request_changes>
 $short_summary
-</changes>
+</pull_request_changes>
 
 ## IMPORTANT Instructions
 
@@ -5284,10 +5289,10 @@ Please review this change.
 
 22-22:
 There's a syntax error in the add function.
-<diff>
+<pull_request_diff>
 -    retrn z
 +    return z
-</diff>
+</pull_request_diff>
 ---
 24-25:
 LGTM!
@@ -6010,7 +6015,7 @@ ${filename}: ${summary}
             (0,core.info)('release notes: nothing obtained from bedrock');
         }
         else {
-            let message = '### Summary by AI reviewer\n\n';
+            let message = '### Summary (generated)\n\n';
             message += releaseNotesResponse;
             try {
                 await commenter.updateDescription(context.payload.pull_request.number, message);
@@ -6218,7 +6223,7 @@ ${reviewsSkipped.length > 0
 <details>
 <summary>Tips</summary>
 
-### Chat with <img src="https://avatars.githubusercontent.com/in/347564?s=41&u=fad245b8b4c7254fe63dd4dcd4d662ace122757e&v=4" alt="Image description" width="20" height="20">  AI reviewer (\`@reviewbot\`)
+### Chat with AI reviewer (\`@reviewbot\`)
 - Reply on review comments left by this bot to ask follow-up questions. A review comment is a comment on a diff or a file.
 - Invite the bot into a review comment chain by tagging \`@reviewbot\` in a reply.
 
