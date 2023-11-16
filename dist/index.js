@@ -2371,7 +2371,7 @@ class Bot {
 /* harmony export */   "oi": () => (/* binding */ RAW_SUMMARY_START_TAG),
 /* harmony export */   "rV": () => (/* binding */ RAW_SUMMARY_END_TAG)
 /* harmony export */ });
-/* unused harmony exports COMMENT_GREETING, IN_PROGRESS_START_TAG, IN_PROGRESS_END_TAG, DESCRIPTION_START_TAG, DESCRIPTION_END_TAG, COMMIT_ID_START_TAG, COMMIT_ID_END_TAG, SELF_LOGIN */
+/* unused harmony exports COMMENT_GREETING, IN_PROGRESS_START_TAG, IN_PROGRESS_END_TAG, DESCRIPTION_START_TAG, DESCRIPTION_END_TAG, COMMIT_ID_START_TAG, COMMIT_ID_END_TAG */
 /* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(42186);
 /* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _actions_github__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(95438);
@@ -2747,15 +2747,15 @@ ${chain}
     }
     getRole(login) {
         if (login === SELF_LOGIN)
-            return '\n\nA: ';
-        return '\n\nH: ';
+            return '\n\nAssistant: ';
+        return `\n\nHuman: (from @${login})`;
     }
     async composeCommentChain(reviewComments, topLevelComment) {
         const conversationChain = reviewComments
             .filter((cmt) => cmt.in_reply_to_id === topLevelComment.id)
-            .map((cmt) => `${this.getRole(cmt.user.login)}${cmt.user.login}: ${cmt.body}`);
-        conversationChain.unshift(`${this.getRole(topLevelComment.user.login)}${topLevelComment.user.login}: ${topLevelComment.body}`);
-        return conversationChain.join('\n---\n');
+            .map((cmt) => `${this.getRole(cmt.user.login)}: ${cmt.body}`);
+        conversationChain.unshift(`${this.getRole(topLevelComment.user.login)}: ${topLevelComment.body}`);
+        return `Here is the last conversation we had: ${conversationChain.join('')}\n\nHuman: End of the last conversation. Now follow the above instruction.`;
     }
     async getCommentChain(pullNumber, comment) {
         try {
