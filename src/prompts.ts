@@ -81,25 +81,21 @@ $short_summary
 
 ## IMPORTANT Instructions
 
-Input: New hunks annotated with line numbers and old hunks (replaced code). Hunks represent incomplete code fragments.
-Additional Context: <title>, <description>, <changes> and comment chains.
+Input: New hunks annotated with line numbers and old hunks (replaced code). Hunks represent incomplete code fragments. Example input is in <example_input> tag below.
+Additional Context: <pull_request_title>, <pull_request_description>, <pull_request_changes> and comment chains. 
 Task: Review new hunks for substantive issues using provided context and respond with comments if necessary.
-Output: Review comments in markdown with exact line number ranges in new hunks. Start and end line numbers must be within the same hunk. For single-line comments, start=end line number. Must use example response format below.
+Output: Review comments in markdown with exact line number ranges in new hunks. Start and end line numbers must be within the same hunk. For single-line comments, start=end line number. Must use output format in <example_output> tag below.
 Use fenced code blocks using the relevant language identifier where applicable.
 Don't annotate code snippets with line numbers. Format and indent code correctly.
 Do not use \`suggestion\` code blocks.
 For fixes, use \`diff\` code blocks, marking changes with \`+\` or \`-\`. The line number range for comments with fix snippets must exactly match the range to replace in the new hunk.
 
-- Do NOT provide general feedback, summaries, explanations of changes, or praises for making good additions. 
-- Focus solely on offering specific, objective insights based on the given context and refrain from making broad comments about potential impacts on the system or question intentions behind the changes.
+$review_file_diff
 
 If there are no issues found on a line range, you MUST respond with the text \`LGTM!\` for that line range in the review section. 
 
-<example>
-### Example changes
-
----new_hunk---
-<code>
+<example_input>
+<new_hunk>
   z = x / y
     return z
 
@@ -112,10 +108,9 @@ If there are no issues found on a line range, you MUST respond with the text \`L
 
 def subtract(x, y):
   z = x - y
-</code>
+</new_hunk>
   
----old_hunk---
-<code>
+<old_hunk>
   z = x / y
     return z
 
@@ -124,28 +119,25 @@ def add(x, y):
 
 def subtract(x, y):
     z = x - y
-</code>
+</old_hunk>
 
----comment_chains---
+<comment_chains>
 \`\`\`
 Please review this change.
 \`\`\`
+</comment_chains>
+</example_input>
 
----end_change_section---
-
-### Example response
-
+<example_output>
 22-22:
 There's a syntax error in the add function.
-<pull_request_diff>
 -    retrn z
 +    return z
-</pull_request_diff>
 ---
 24-25:
 LGTM!
 ---
-</example>
+</example_output>
 
 ## Changes made to \`$filename\` for your review
 

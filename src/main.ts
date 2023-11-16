@@ -21,6 +21,7 @@ async function run(): Promise<void> {
     getBooleanInput('review_comment_lgtm'),
     getMultilineInput('path_filters'),
     getInput('system_message'),
+    getInput('review_file_diff'),
     getInput('bedrock_light_model'),
     getInput('bedrock_heavy_model'),
     getInput('bedrock_model_temperature'),

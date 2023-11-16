@@ -4,6 +4,7 @@ export class Inputs {
   description: string
   rawSummary: string
   shortSummary: string
+  reviewFileDiff: string
   filename: string
   fileContent: string
   fileDiff: string
@@ -18,6 +19,7 @@ export class Inputs {
     description = 'no description provided',
     rawSummary = '',
     shortSummary = '',
+    reviewFileDiff = '',
     filename = '',
     fileContent = 'file contents cannot be provided',
     fileDiff = 'file diff cannot be provided',
@@ -31,6 +33,7 @@ export class Inputs {
     this.description = description
     this.rawSummary = rawSummary
     this.shortSummary = shortSummary
+    this.reviewFileDiff = reviewFileDiff
     this.filename = filename
     this.fileContent = fileContent
     this.fileDiff = fileDiff
@@ -47,6 +50,7 @@ export class Inputs {
       this.description,
       this.rawSummary,
       this.shortSummary,
+      this.reviewFileDiff,
       this.filename,
       this.fileContent,
       this.fileDiff,
@@ -75,6 +79,9 @@ export class Inputs {
     }
     if (this.shortSummary) {
       content = content.replace('$short_summary', this.shortSummary)
+    }
+    if (this.reviewFileDiff) {
+      content = content.replace('$review_file_diff', this.reviewFileDiff)
     }
     if (this.filename) {
       content = content.replace('$filename', this.filename)

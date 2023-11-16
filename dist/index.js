@@ -3018,6 +3018,7 @@ class Inputs {
     description;
     rawSummary;
     shortSummary;
+    reviewFileDiff;
     filename;
     fileContent;
     fileDiff;
@@ -3025,12 +3026,13 @@ class Inputs {
     diff;
     commentChain;
     comment;
-    constructor(systemMessage = '', title = 'no title provided', description = 'no description provided', rawSummary = '', shortSummary = '', filename = '', fileContent = 'file contents cannot be provided', fileDiff = 'file diff cannot be provided', patches = '', diff = 'no diff', commentChain = 'no other comments on this patch', comment = 'no comment provided') {
+    constructor(systemMessage = '', title = 'no title provided', description = 'no description provided', rawSummary = '', shortSummary = '', reviewFileDiff = '', filename = '', fileContent = 'file contents cannot be provided', fileDiff = 'file diff cannot be provided', patches = '', diff = 'no diff', commentChain = 'no other comments on this patch', comment = 'no comment provided') {
         this.systemMessage = systemMessage;
         this.title = title;
         this.description = description;
         this.rawSummary = rawSummary;
         this.shortSummary = shortSummary;
+        this.reviewFileDiff = reviewFileDiff;
         this.filename = filename;
         this.fileContent = fileContent;
         this.fileDiff = fileDiff;
@@ -3040,7 +3042,7 @@ class Inputs {
         this.comment = comment;
     }
     clone() {
-        return new Inputs(this.systemMessage, this.title, this.description, this.rawSummary, this.shortSummary, this.filename, this.fileContent, this.fileDiff, this.patches, this.diff, this.commentChain, this.comment);
+        return new Inputs(this.systemMessage, this.title, this.description, this.rawSummary, this.shortSummary, this.reviewFileDiff, this.filename, this.fileContent, this.fileDiff, this.patches, this.diff, this.commentChain, this.comment);
     }
     render(content) {
         if (!content) {
@@ -3060,6 +3062,9 @@ class Inputs {
         }
         if (this.shortSummary) {
             content = content.replace('$short_summary', this.shortSummary);
+        }
+        if (this.reviewFileDiff) {
+            content = content.replace('$review_file_diff', this.reviewFileDiff);
         }
         if (this.filename) {
             content = content.replace('$filename', this.filename);
@@ -3109,7 +3114,7 @@ __nccwpck_require__.r(__webpack_exports__);
 
 
 async function run() {
-    const options = new _options__WEBPACK_IMPORTED_MODULE_2__/* .Options */ .Ei((0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('debug'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('disable_review'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('disable_release_notes'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('max_files'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('review_simple_changes'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('review_comment_lgtm'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getMultilineInput)('path_filters'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('system_message'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_light_model'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_heavy_model'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_model_temperature'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_retries'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_timeout_ms'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_concurrency_limit'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('github_concurrency_limit'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('language'));
+    const options = new _options__WEBPACK_IMPORTED_MODULE_2__/* .Options */ .Ei((0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('debug'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('disable_review'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('disable_release_notes'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('max_files'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('review_simple_changes'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getBooleanInput)('review_comment_lgtm'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getMultilineInput)('path_filters'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('system_message'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('review_file_diff'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_light_model'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_heavy_model'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_model_temperature'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_retries'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_timeout_ms'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bedrock_concurrency_limit'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('github_concurrency_limit'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('language'));
     // print options
     options.print();
     const prompts = new _prompts__WEBPACK_IMPORTED_MODULE_5__/* .Prompts */ .j((0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('summarize'), (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('summarize_release_notes'));
@@ -5030,6 +5035,7 @@ class Options {
     reviewCommentLGTM;
     pathFilters;
     systemMessage;
+    reviewFileDiff;
     bedrockLightModel;
     bedrockHeavyModel;
     bedrockModelTemperature;
@@ -5040,7 +5046,7 @@ class Options {
     lightTokenLimits;
     heavyTokenLimits;
     language;
-    constructor(debug, disableReview, disableReleaseNotes, maxFiles = '0', reviewSimpleChanges = false, reviewCommentLGTM = false, pathFilters = null, systemMessage = '', bedrockLightModel, bedrockHeavyModel, bedrockModelTemperature = '0.0', bedrockRetries = '3', bedrockTimeoutMS = '120000', bedrockConcurrencyLimit = '6', githubConcurrencyLimit = '6', language = 'en-US') {
+    constructor(debug, disableReview, disableReleaseNotes, maxFiles = '0', reviewSimpleChanges = false, reviewCommentLGTM = false, pathFilters = null, systemMessage = '', reviewFileDiff = '', bedrockLightModel, bedrockHeavyModel, bedrockModelTemperature = '0.0', bedrockRetries = '3', bedrockTimeoutMS = '120000', bedrockConcurrencyLimit = '6', githubConcurrencyLimit = '6', language = 'en-US') {
         this.debug = debug;
         this.disableReview = disableReview;
         this.disableReleaseNotes = disableReleaseNotes;
@@ -5049,6 +5055,7 @@ class Options {
         this.reviewCommentLGTM = reviewCommentLGTM;
         this.pathFilters = new PathFilter(pathFilters);
         this.systemMessage = systemMessage;
+        this.reviewFileDiff = reviewFileDiff;
         this.bedrockLightModel = bedrockLightModel;
         this.bedrockHeavyModel = bedrockHeavyModel;
         this.bedrockModelTemperature = parseFloat(bedrockModelTemperature);
@@ -5070,6 +5077,7 @@ class Options {
         (0,core.info)(`review_comment_lgtm: ${this.reviewCommentLGTM}`);
         (0,core.info)(`path_filters: ${this.pathFilters}`);
         (0,core.info)(`system_message: ${this.systemMessage}`);
+        (0,core.info)(`review_file_diff: ${this.reviewFileDiff}`);
         (0,core.info)(`bedrock_light_model: ${this.bedrockLightModel}`);
         (0,core.info)(`bedrock_heavy_model: ${this.bedrockHeavyModel}`);
         (0,core.info)(`bedrock_model_temperature: ${this.bedrockModelTemperature}`);
@@ -5234,25 +5242,21 @@ $short_summary
 
 ## IMPORTANT Instructions
 
-Input: New hunks annotated with line numbers and old hunks (replaced code). Hunks represent incomplete code fragments.
-Additional Context: <title>, <description>, <changes> and comment chains.
+Input: New hunks annotated with line numbers and old hunks (replaced code). Hunks represent incomplete code fragments. Example input is in <example_input> tag below.
+Additional Context: <pull_request_title>, <pull_request_description>, <pull_request_changes> and comment chains. 
 Task: Review new hunks for substantive issues using provided context and respond with comments if necessary.
-Output: Review comments in markdown with exact line number ranges in new hunks. Start and end line numbers must be within the same hunk. For single-line comments, start=end line number. Must use example response format below.
+Output: Review comments in markdown with exact line number ranges in new hunks. Start and end line numbers must be within the same hunk. For single-line comments, start=end line number. Must use output format in <example_output> tag below.
 Use fenced code blocks using the relevant language identifier where applicable.
 Don't annotate code snippets with line numbers. Format and indent code correctly.
 Do not use \`suggestion\` code blocks.
 For fixes, use \`diff\` code blocks, marking changes with \`+\` or \`-\`. The line number range for comments with fix snippets must exactly match the range to replace in the new hunk.
 
-- Do NOT provide general feedback, summaries, explanations of changes, or praises for making good additions. 
-- Focus solely on offering specific, objective insights based on the given context and refrain from making broad comments about potential impacts on the system or question intentions behind the changes.
+$review_file_diff
 
 If there are no issues found on a line range, you MUST respond with the text \`LGTM!\` for that line range in the review section. 
 
-<example>
-### Example changes
-
----new_hunk---
-<code>
+<example_input>
+<new_hunk>
   z = x / y
     return z
 
@@ -5265,10 +5269,9 @@ If there are no issues found on a line range, you MUST respond with the text \`L
 
 def subtract(x, y):
   z = x - y
-</code>
+</new_hunk>
   
----old_hunk---
-<code>
+<old_hunk>
   z = x / y
     return z
 
@@ -5277,28 +5280,25 @@ def add(x, y):
 
 def subtract(x, y):
     z = x - y
-</code>
+</old_hunk>
 
----comment_chains---
+<comment_chains>
 \`\`\`
 Please review this change.
 \`\`\`
+</comment_chains>
+</example_input>
 
----end_change_section---
-
-### Example response
-
+<example_output>
 22-22:
 There's a syntax error in the add function.
-<pull_request_diff>
 -    retrn z
 +    return z
-</pull_request_diff>
 ---
 24-25:
 LGTM!
 ---
-</example>
+</example_output>
 
 ## Changes made to \`$filename\` for your review
 
@@ -5749,6 +5749,7 @@ const codeReview = async (lightBot, heavyBot, options, prompts) => {
     }
     // as gpt-3.5-turbo isn't paying attention to system message, add to inputs for now
     inputs.systemMessage = options.systemMessage;
+    inputs.reviewFileDiff = options.reviewFileDiff;
     // get SUMMARIZE_TAG message
     const existingSummarizeCmt = await commenter.findCommentWithTag(lib_commenter/* SUMMARIZE_TAG */.Rp, context.payload.pull_request.number);
     let existingCommitIdsBlock = '';
@@ -5862,15 +5863,17 @@ const codeReview = async (lightBot, heavyBot, options, prompts) => {
                 continue;
             }
             const hunksStr = `
----new_hunk---
+<new_hunk>
 \`\`\`
 ${hunks.newHunk}
 \`\`\`
+</new_hunk>
 
----old_hunk---
+<old_hunk>
 \`\`\`
 ${hunks.oldHunk}
 \`\`\`
+</old_hunk>
 `;
             patches.push([
                 patchLines.newHunk.startLine,
@@ -6130,15 +6133,13 @@ ${patch}
 `;
                 if (commentChain !== '') {
                     ins.patches += `
----comment_chains---
+<comment_chains>
 \`\`\`
 ${commentChain}
 \`\`\`
+</comment_chains>
 `;
                 }
-                ins.patches += `
----end_change_section---
-`;
             }
             if (patchesPacked > 0) {
                 // perform review

@@ -211,6 +211,12 @@ inputs:
 
       Avoid additional commentary as this summary will be added as a comment on the 
       GitHub pull request. Use the titles "Walkthrough" and "Changes" and they must be H2.
+  review_file_diff:
+    required: false
+    description: 'The additional instruction for reviewing file diff'
+    default: |
+      - Do NOT provide general feedback, summaries, explanations of changes, or praises for making good additions. 
+      - Focus solely on offering specific, objective insights based on the given context and refrain from making broad comments about potential impacts on the system or question intentions behind the changes.
 
   summarize_release_notes:
     required: false

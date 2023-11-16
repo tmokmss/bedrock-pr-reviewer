@@ -65,6 +65,7 @@ export const codeReview = async (
 
   // as gpt-3.5-turbo isn't paying attention to system message, add to inputs for now
   inputs.systemMessage = options.systemMessage
+  inputs.reviewFileDiff = options.reviewFileDiff
 
   // get SUMMARIZE_TAG message
   const existingSummarizeCmt = await commenter.findCommentWithTag(
@@ -222,15 +223,17 @@ export const codeReview = async (
             continue
           }
           const hunksStr = `
----new_hunk---
+<new_hunk>
 \`\`\`
 ${hunks.newHunk}
 \`\`\`
+</new_hunk>
 
----old_hunk---
+<old_hunk>
 \`\`\`
 ${hunks.oldHunk}
 \`\`\`
+</old_hunk>
 `
           patches.push([
             patchLines.newHunk.startLine,
@@ -589,16 +592,13 @@ ${patch}
 `
         if (commentChain !== '') {
           ins.patches += `
----comment_chains---
+<comment_chains>
 \`\`\`
 ${commentChain}
 \`\`\`
+</comment_chains>
 `
         }
-
-        ins.patches += `
----end_change_section---
-`
       }
 
       if (patchesPacked > 0) {

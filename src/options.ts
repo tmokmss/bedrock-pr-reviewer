@@ -11,6 +11,7 @@ export class Options {
   reviewCommentLGTM: boolean
   pathFilters: PathFilter
   systemMessage: string
+  reviewFileDiff: string
   bedrockLightModel: string
   bedrockHeavyModel: string
   bedrockModelTemperature: number
@@ -31,6 +32,7 @@ export class Options {
     reviewCommentLGTM = false,
     pathFilters: string[] | null = null,
     systemMessage = '',
+    reviewFileDiff = '',
     bedrockLightModel: string,
     bedrockHeavyModel: string,
     bedrockModelTemperature = '0.0',
@@ -48,6 +50,7 @@ export class Options {
     this.reviewCommentLGTM = reviewCommentLGTM
     this.pathFilters = new PathFilter(pathFilters)
     this.systemMessage = systemMessage
+    this.reviewFileDiff = reviewFileDiff
     this.bedrockLightModel = bedrockLightModel
     this.bedrockHeavyModel = bedrockHeavyModel
     this.bedrockModelTemperature = parseFloat(bedrockModelTemperature)
@@ -70,6 +73,7 @@ export class Options {
     info(`review_comment_lgtm: ${this.reviewCommentLGTM}`)
     info(`path_filters: ${this.pathFilters}`)
     info(`system_message: ${this.systemMessage}`)
+    info(`review_file_diff: ${this.reviewFileDiff}`)
     info(`bedrock_light_model: ${this.bedrockLightModel}`)
     info(`bedrock_heavy_model: ${this.bedrockHeavyModel}`)
     info(`bedrock_model_temperature: ${this.bedrockModelTemperature}`)
