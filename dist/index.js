@@ -2322,7 +2322,7 @@ class Bot {
                     // eslint-disable-next-line camelcase
                     top_k: 250,
                     // eslint-disable-next-line camelcase
-                    max_tokens_to_sample: 200,
+                    max_tokens_to_sample: 4000,
                     // eslint-disable-next-line camelcase
                     stop_sequences: ['\n\nHuman:']
                 }),
