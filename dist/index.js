@@ -2384,7 +2384,7 @@ class Bot {
 // eslint-disable-next-line camelcase
 const context = _actions_github__WEBPACK_IMPORTED_MODULE_1__.context;
 const repo = context.repo;
-const COMMENT_GREETING = `${(0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('bot_icon')}`;
+const COMMENT_GREETING = ''; //`${getInput('bot_icon')}`
 const COMMENT_TAG = '<!-- This is an auto-generated comment by AI reviewer -->';
 const COMMENT_REPLY_TAG = '<!-- This is an auto-generated reply by AI reviewer -->';
 const SUMMARIZE_TAG = '<!-- This is an auto-generated comment: summarize by AI reviewer -->';
@@ -5755,7 +5755,6 @@ const codeReview = async (lightBot, heavyBot, options, prompts) => {
         (0,core.info)('Skipped: description contains ignore_keyword');
         return;
     }
-    // as gpt-3.5-turbo isn't paying attention to system message, add to inputs for now
     inputs.systemMessage = options.systemMessage;
     inputs.reviewFileDiff = options.reviewFileDiff;
     // get SUMMARIZE_TAG message

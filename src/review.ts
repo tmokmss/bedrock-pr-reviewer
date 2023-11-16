@@ -63,7 +63,6 @@ export const codeReview = async (
     return
   }
 
-  // as gpt-3.5-turbo isn't paying attention to system message, add to inputs for now
   inputs.systemMessage = options.systemMessage
   inputs.reviewFileDiff = options.reviewFileDiff
 
