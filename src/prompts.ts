@@ -92,7 +92,7 @@ For fixes, use \`diff\` code blocks, marking changes with \`+\` or \`-\`. The li
 
 $review_file_diff
 
-If there are no issues found on a line range, you MUST respond with the text \`LGTM!\` for that line range in the review section. 
+If there are no issues found on a line range, you MUST respond with the flag "lgtm": true in the response JSON. 
 
 <example_input>
 <new_hunk>
@@ -103,6 +103,7 @@ If there are no issues found on a line range, you MUST respond with the text \`L
 21:     z = x + y
 22:     retrn z
 23: 
+24: 
 24: def multiply(x, y):
 25:     return x * y
 
@@ -134,16 +135,15 @@ Please review this change.
     {
       "line_start": 22,
       "line_end": 22,
-      "comment": "There's a syntax error in the add function.
-  -    retrn z
-  +    return z",
+      "comment": "There's a syntax error in the add function.\\n  -    retrn z\\n  +    return z",
     },
     {
-      "line_start": 24,
-      "line_end": 25,
-      "comment": "LGTM!",
+      "line_start": 23,
+      "line_end": 24,
+      "comment": "There's a redundant new line here. It should be only one.",
     }
-  ]
+  ],
+  "lgtm": false
 }
 </example_output>
 
