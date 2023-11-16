@@ -5185,17 +5185,27 @@ class BedrockOptions {
 /* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
 /* harmony export */   "m": () => (/* binding */ isCollaborator)
 /* harmony export */ });
-/* harmony import */ var _octokit__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(83258);
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(42186);
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _octokit__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(83258);
+
 
 // https://stackoverflow.com/questions/27883893/github-api-how-to-check-if-user-has-write-access-to-a-repository
 const isCollaborator = async (user, repository) => {
     const [owner, repo] = repository.split('/');
-    const res = await _octokit__WEBPACK_IMPORTED_MODULE_0__/* .octokit.repos.checkCollaborator */ .K.repos.checkCollaborator({
-        owner,
-        repo,
-        username: user
-    });
-    return res.status === 204;
+    try {
+        const res = await _octokit__WEBPACK_IMPORTED_MODULE_1__/* .octokit.repos.checkCollaborator */ .K.repos.checkCollaborator({
+            owner,
+            repo,
+            username: user
+        });
+        return res.status === 204;
+    }
+    catch (e) {
+        // raise error on 404
+        (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.info)(`got error on isCollaborator ${e}}`);
+        return false;
+    }
 };
 
 
