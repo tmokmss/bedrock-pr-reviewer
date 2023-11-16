@@ -9,17 +9,17 @@ I would like you to succinctly summarize the Pull Request within 100 words.
 The Pull Request is described with <title>, <description>, and <diff> tags.
 If applicable, your summary should include a note about alterations to the signatures of exported functions, global data structures and variables, and any changes that might affect the external interface or behavior of the code.
 
-<title>
+<pull_request_title>
 $title 
-</title>
+</pull_request_title>
 
-<description>
+<pull_request_description>
 $description
-</description>
+</pull_request_description>
 
-<diff>
+<pull_request_diff>
 $file_diff
-</diff>
+</pull_request_diff>
 `
   triageFileDiff = `Below the summary, I would also like you to triage the diff as \`NEEDS_REVIEW\` or \`APPROVED\` based on the following criteria:
 
@@ -67,17 +67,17 @@ Instructions:
 `
 
   reviewFileDiff = `
-<title>
+<pull_request_title>
 $title 
-</title>
+</pull_request_title>
 
-<description>
+<pull_request_description>
 $description
-</description>
+</pull_request_description>
 
-<changes>
+<pull_request_changes>
 $short_summary
-</changes>
+</pull_request_changes>
 
 ## IMPORTANT Instructions
 
@@ -137,10 +137,10 @@ Please review this change.
 
 22-22:
 There's a syntax error in the add function.
-<diff>
+<pull_request_diff>
 -    retrn z
 +    return z
-</diff>
+</pull_request_diff>
 ---
 24-25:
 LGTM!

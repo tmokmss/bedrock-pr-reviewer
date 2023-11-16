@@ -108,6 +108,11 @@ export class PathFilter {
     }
   }
 
+  /**
+   * Returns true if the file should be processed, not ignored.
+   * If there is any inclusion rule set, a file is included when it matches any of inclusion rule.
+   * If there is no inclusion rule set, a file is included when it does not matches any of exclusion rule.
+   */
   check(path: string): boolean {
     if (this.rules.length === 0) {
       return true

@@ -427,7 +427,7 @@ ${filename}: ${summary}
     if (releaseNotesResponse === '') {
       info('release notes: nothing obtained from bedrock')
     } else {
-      let message = '### Summary by AI reviewer\n\n'
+      let message = '### Summary (generated)\n\n'
       message += releaseNotesResponse
       try {
         await commenter.updateDescription(
