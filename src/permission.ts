@@ -5,15 +5,17 @@ import {octokit} from './octokit'
 export const isCollaborator = async (user: string, repository: string) => {
   const [owner, repo] = repository.split('/')
   try {
-    const res = await octokit.repos.checkCollaborator({
+    const res = await octokit.repos.getCollaboratorPermissionLevel({
       owner,
       repo,
       username: user
     })
-    return res.status === 204
+    return ['admin', 'write'].includes(res.data.permission)
   } catch (e) {
     // raise error on 404
-    info(`got error on isCollaborator ${e}}`)
+    info(
+      `got error on isCollaborator ${e}. owner: ${owner} repo: ${repo} user: ${user}`
+    )
     return false
   }
 }

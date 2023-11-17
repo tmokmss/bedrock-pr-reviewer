@@ -5194,16 +5194,16 @@ class BedrockOptions {
 const isCollaborator = async (user, repository) => {
     const [owner, repo] = repository.split('/');
     try {
-        const res = await _octokit__WEBPACK_IMPORTED_MODULE_1__/* .octokit.repos.checkCollaborator */ .K.repos.checkCollaborator({
+        const res = await _octokit__WEBPACK_IMPORTED_MODULE_1__/* .octokit.repos.getCollaboratorPermissionLevel */ .K.repos.getCollaboratorPermissionLevel({
             owner,
             repo,
             username: user
         });
-        return res.status === 204;
+        return ['admin', 'write'].includes(res.data.permission);
     }
     catch (e) {
         // raise error on 404
-        (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.info)(`got error on isCollaborator ${e}}`);
+        (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.info)(`got error on isCollaborator ${e}. owner: ${owner} repo: ${repo} user: ${user}`);
         return false;
     }
 };
