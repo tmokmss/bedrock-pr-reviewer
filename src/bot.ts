@@ -80,7 +80,7 @@ export class Bot {
                       }
                     ]
                   },
-                  ...(prefix != null
+                  ...(prefix
                     ? [
                         {
                           role: 'assistant',
