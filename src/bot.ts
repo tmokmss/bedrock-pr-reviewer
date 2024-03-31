@@ -61,18 +61,42 @@ export class Bot {
             new InvokeModelCommand({
               modelId: this.bedrockOptions.model,
               body: JSON.stringify({
-                prompt: `\n\nHuman:${message}\n\nAssistant: ${prefix}`,
-                temperature: 0,
+                // eslint-disable-next-line camelcase
+                anthropic_version: 'bedrock-2023-05-31',
+                // eslint-disable-next-line camelcase
+                max_tokens: 4000,
                 // eslint-disable-next-line camelcase
                 top_p: 0.9,
                 // eslint-disable-next-line camelcase
                 top_k: 250,
-                // eslint-disable-next-line camelcase
-                max_tokens_to_sample: 4000,
-                // eslint-disable-next-line camelcase
-                stop_sequences: ['\n\nHuman:']
+                temperature: 0,
+                messages: [
+                  {
+                    role: 'user',
+                    content: [
+                      {
+                        type: 'text',
+                        text: message
+                      }
+                    ]
+                  },
+                  ...(prefix
+                    ? [
+                        {
+                          role: 'assistant',
+                          content: [
+                            {
+                              type: 'text',
+                              text: prefix
+                            }
+                          ]
+                        }
+                      ]
+                    : [])
+                ]
               }),
-              contentType: 'application/json'
+              contentType: 'application/json',
+              accept: 'application/json'
             })
           ),
         {
@@ -89,9 +113,8 @@ export class Bot {
 
     let responseText = ''
     if (response != null) {
-      responseText = JSON.parse(
-        Buffer.from(response.body).toString('utf-8')
-      ).completion
+      responseText = JSON.parse(Buffer.from(response.body).toString('utf-8'))
+        .content?.[0]?.text
     } else {
       warning('bedrock response is null')
     }
