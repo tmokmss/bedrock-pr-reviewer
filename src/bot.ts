@@ -65,11 +65,11 @@ export class Bot {
                 anthropic_version: 'bedrock-2023-05-31',
                 // eslint-disable-next-line camelcase
                 max_tokens: 4000,
-                temperature: 0,
                 // eslint-disable-next-line camelcase
                 top_p: 0.9,
                 // eslint-disable-next-line camelcase
                 top_k: 250,
+                temperature: 0,
                 messages: [
                   {
                     role: 'user',
@@ -80,7 +80,7 @@ export class Bot {
                       }
                     ]
                   },
-                  ...(prefix
+                  ...(prefix != null
                     ? [
                         {
                           role: 'assistant',
