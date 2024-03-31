@@ -152,11 +152,11 @@ inputs:
     required: false
     description:
       'Model to use for simple tasks like summarizing diff on a file.'
-    default: 'anthropic.claude-instant-v1'
+    default: 'anthropic.claude-3-haiku-20240307-v1:0'
   bedrock_heavy_model:
     required: false
     description: 'Model to use for complex tasks such as code reviews.'
-    default: 'anthropic.claude-v2'
+    default: 'anthropic.claude-3-sonnet-20240229-v1:0'
   bedrock_model_temperature:
     required: false
     description: 'Temperature for GPT model'
