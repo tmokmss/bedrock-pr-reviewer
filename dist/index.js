@@ -2362,7 +2362,8 @@ class Bot {
         (0,core.info)(`bedrock sendMessage (including retries) response time: ${end - start} ms`);
         let responseText = '';
         if (response != null) {
-            responseText = JSON.parse(Buffer.from(response.body).toString('utf-8')).completion;
+            responseText = JSON.parse(Buffer.from(response.body).toString('utf-8'))
+                .content?.[0]?.text;
         }
         else {
             (0,core.warning)('bedrock response is null');
