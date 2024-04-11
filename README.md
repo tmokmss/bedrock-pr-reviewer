@@ -44,9 +44,9 @@ FAQs, you can refer to the sections below.
 
 ## Install instructions
 
-You have to create an IAM role first for authenticating Bedrock API. You can use [the CloudFormation template](docs/oidc-cfn.yaml) to create one.
+You have to create an IAM role first for authenticating Bedrock API. You can use [the CloudFormation template](docs/oidc-cfn.yaml) to create one. Please replace `SubjectClaimFilters` field value to allow access to your GitHub repository.
 
-`ai-pr-reviewer` runs as a GitHub Action. Add the below file to your repository at `.github/workflows/ai-pr-reviewer.yml`.
+`ai-pr-reviewer` runs as a GitHub Action. Add the below file to your repository at `.github/workflows/ai-pr-reviewer.yml`. Please replace `role-to-assume` field value to the actual IAM role ARN created by the CloudFormation template.
 
 ```yaml
 name: Code Review
@@ -91,16 +91,6 @@ jobs:
 
 - `GITHUB_TOKEN`: This should already be available to the GitHub Action
   environment. This is used to add comments to the pull request.
-
-### Models: `gpt-4` and `gpt-3.5-turbo`
-
-Recommend using `gpt-3.5-turbo` for lighter tasks such as summarizing the
-changes (`bedrock_light_model` in configuration) and `gpt-4` for more complex
-review and commenting tasks (`bedrock_heavy_model` in configuration).
-
-Costs: `gpt-3.5-turbo` is dirt cheap. `gpt-4` is orders of magnitude more
-expensive, but the results are vastly superior. We are typically spending $20 a
-day for a 20 developer team with `gpt-4` based review and commenting.
 
 ### Prompts & Configuration
 
