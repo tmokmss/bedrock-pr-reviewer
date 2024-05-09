@@ -52,6 +52,7 @@ You have to create an IAM role first for authenticating Bedrock API. You can use
 name: Code Review
 
 permissions:
+  id-token: write
   contents: read
   pull-requests: write
 
