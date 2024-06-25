@@ -2318,11 +2318,7 @@ class Bot {
                     // eslint-disable-next-line camelcase
                     anthropic_version: 'bedrock-2023-05-31',
                     // eslint-disable-next-line camelcase
-                    max_tokens: 4000,
-                    // eslint-disable-next-line camelcase
-                    top_p: 0.9,
-                    // eslint-disable-next-line camelcase
-                    top_k: 250,
+                    max_tokens: 4096,
                     temperature: 0,
                     messages: [
                         {
@@ -5053,8 +5049,9 @@ class TokenLimits {
             this.responseTokens = 3000;
         }
         else {
-            this.maxTokens = 4000;
-            this.responseTokens = 1000;
+            // The latest models usually have this level of limits.
+            this.maxTokens = 200_000;
+            this.responseTokens = 4096;
         }
         // provide some margin for the request tokens
         this.requestTokens = this.maxTokens - this.responseTokens - 100;

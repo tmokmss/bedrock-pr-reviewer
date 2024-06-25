@@ -64,11 +64,7 @@ export class Bot {
                 // eslint-disable-next-line camelcase
                 anthropic_version: 'bedrock-2023-05-31',
                 // eslint-disable-next-line camelcase
-                max_tokens: 4000,
-                // eslint-disable-next-line camelcase
-                top_p: 0.9,
-                // eslint-disable-next-line camelcase
-                top_k: 250,
+                max_tokens: 4096,
                 temperature: 0,
                 messages: [
                   {
