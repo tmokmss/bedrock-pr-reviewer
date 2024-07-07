@@ -166,6 +166,14 @@ export const codeReview = async (
     return
   }
 
+  // Fetch commit messages
+  const commitMessages = commits.map(commit => ({
+    sha: commit.sha,
+    message: commit.commit.message
+  }))
+
+  inputs.commitMessages = commitMessages
+
   // find hunks to review
   const filteredFiles: Array<
     [string, string, string, Array<[number, number, string]>] | null
