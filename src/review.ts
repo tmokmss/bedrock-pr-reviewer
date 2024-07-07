@@ -626,6 +626,7 @@ ${commentChain}
             if (
               !options.reviewCommentLGTM &&
               (review.comment.includes('LGTM') ||
+                review.comment.includes('lgtm') ||
                 review.comment.includes('looks good to me'))
             ) {
               lgtmCount += 1
