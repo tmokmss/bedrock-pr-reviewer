@@ -1,3 +1,4 @@
+import {Message} from './bot'
 import {type Inputs} from './inputs'
 
 export class Prompts {
@@ -66,7 +67,7 @@ Instructions:
 - The summary should not exceed 500 words.
 `
 
-  reviewFileDiff = `
+  reviewFileDiffSystem = `
 $system_message
 
 <pull_request_title>
@@ -130,8 +131,9 @@ Please review this change.
 \`\`\`
 </comment_chains>
 </example_input>
+`
 
-<example_output>
+  reviewFileDiffAssistant = `
 {
   "reviews": [
     {
@@ -147,8 +149,9 @@ Please review this change.
   ],
   "lgtm": false
 }
-</example_output>
+`
 
+  reviewFileDiffUser = `
 ## Changes made to \`$filename\` for your review
 
 $patches
@@ -245,7 +248,20 @@ $comment
     return inputs.render(this.comment)
   }
 
-  renderReviewFileDiff(inputs: Inputs): string {
-    return inputs.render(this.reviewFileDiff)
+  renderReviewFileDiff(inputs: Inputs): Array<Message> {
+    return [
+      {
+        role: 'user',
+        content: inputs.render(this.reviewFileDiffSystem)
+      },
+      {
+        role: 'assistant',
+        content: this.reviewFileDiffAssistant
+      },
+      {
+        role: 'user',
+        content: inputs.render(this.reviewFileDiffUser)
+      }
+    ]
   }
 }
