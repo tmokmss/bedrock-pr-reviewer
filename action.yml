@@ -228,5 +228,5 @@ inputs:
     description: 'The icon for the bot'
     default: 🤖
 runs:
-  using: 'node16'
+  using: 'node20'
   main: 'dist/index.js'
