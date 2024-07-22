@@ -2292,8 +2292,10 @@ class Bot {
     chat = async (message, prefix) => {
         let res = '';
         try {
-            res = await this.chat_([{ role: 'user', content: `${message}\n${prefix}` }]);
-            return `${prefix}${res}`;
+            res = await this.chat_([
+                { role: 'user', content: `${message}\n${prefix ?? ''}` }
+            ]);
+            return `${prefix ?? ''}${res}`;
         }
         catch (e) {
             (0,core.warning)(`Failed to chat: ${e}`);
@@ -6453,7 +6455,11 @@ function parseReview(response,
 patches) {
     const reviews = [];
     try {
-        const rawReviews = JSON.parse(response).reviews;
+        const responseJson = JSON.parse(response);
+        if (responseJson?.lgtm) {
+            return [];
+        }
+        const rawReviews = responseJson.reviews;
         for (const r of rawReviews) {
             if (r.comment) {
                 reviews.push({

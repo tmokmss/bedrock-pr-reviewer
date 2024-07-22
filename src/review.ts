@@ -868,7 +868,12 @@ function parseReview(
   const reviews: Review[] = []
 
   try {
-    const rawReviews = JSON.parse(response).reviews
+    const responseJson = JSON.parse(response)
+    if (responseJson?.lgtm) {
+      return []
+    }
+
+    const rawReviews = responseJson.reviews
     for (const r of rawReviews) {
       if (r.comment) {
         reviews.push({
