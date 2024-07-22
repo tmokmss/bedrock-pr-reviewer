@@ -16,7 +16,7 @@ import {Inputs} from './inputs'
 import {octokit} from './octokit'
 import {type Options} from './options'
 import {type Prompts} from './prompts'
-import {getTokenCount} from './tokenizer'
+import {getTokenCount, getTokenCountRolePlay} from './tokenizer'
 
 // eslint-disable-next-line camelcase
 const context = github_context
@@ -165,6 +165,14 @@ export const codeReview = async (
     warning('Skipped: commits is null')
     return
   }
+
+  // Fetch commit messages
+  const commitMessages = commits.map(commit => ({
+    sha: commit.sha,
+    message: commit.commit.message
+  }))
+
+  inputs.commitMessages = commitMessages
 
   // find hunks to review
   const filteredFiles: Array<
@@ -339,7 +347,7 @@ ${
 
     // summarize content
     try {
-      const [summarizeResp] = await lightBot.chat(summarizePrompt)
+      const summarizeResp = await lightBot.chat(summarizePrompt)
 
       if (summarizeResp === '') {
         info('summarize: nothing obtained from bedrock')
@@ -402,7 +410,7 @@ ${filename}: ${summary}
 `
       }
       // ask Bedrock to summarize the summaries
-      const [summarizeResp] = await heavyBot.chat(
+      const summarizeResp = await heavyBot.chat(
         prompts.renderSummarizeChangesets(inputs)
       )
       if (summarizeResp === '') {
@@ -414,7 +422,7 @@ ${filename}: ${summary}
   }
 
   // final summary
-  const [summarizeFinalResponse] = await heavyBot.chat(
+  const summarizeFinalResponse = await heavyBot.chat(
     prompts.renderSummarize(inputs)
   )
   if (summarizeFinalResponse === '') {
@@ -423,7 +431,7 @@ ${filename}: ${summary}
 
   if (options.disableReleaseNotes === false) {
     // final release notes
-    const [releaseNotesResponse] = await heavyBot.chat(
+    const releaseNotesResponse = await heavyBot.chat(
       prompts.renderSummarizeReleaseNotes(inputs)
     )
     if (releaseNotesResponse === '') {
@@ -443,7 +451,7 @@ ${filename}: ${summary}
   }
 
   // generate a short summary as well
-  const [summarizeShortResponse] = await heavyBot.chat(
+  const summarizeShortResponse = await heavyBot.chat(
     prompts.renderSummarizeShort(inputs)
   )
   inputs.shortSummary = summarizeShortResponse
@@ -521,7 +529,7 @@ ${
       ins.filename = filename
 
       // calculate tokens based on inputs so far
-      let tokens = getTokenCount(prompts.renderReviewFileDiff(ins))
+      let tokens = getTokenCountRolePlay(prompts.renderReviewFileDiff(ins))
       // loop to calculate total patch tokens
       let patchesToPack = 0
       for (const [, , patch] of patches) {
@@ -603,9 +611,8 @@ ${commentChain}
       if (patchesPacked > 0) {
         // perform review
         try {
-          const [response] = await heavyBot.chat(
-            prompts.renderReviewFileDiff(ins),
-            '{'
+          const response = await heavyBot.roleplayChat(
+            prompts.renderReviewFileDiff(ins)
           )
           if (response === '') {
             info('review: nothing obtained from bedrock')
@@ -619,6 +626,7 @@ ${commentChain}
             if (
               !options.reviewCommentLGTM &&
               (review.comment.includes('LGTM') ||
+                review.comment.includes('lgtm') ||
                 review.comment.includes('looks good to me'))
             ) {
               lgtmCount += 1
@@ -860,7 +868,12 @@ function parseReview(
   const reviews: Review[] = []
 
   try {
-    const rawReviews = JSON.parse(response).reviews
+    const responseJson = JSON.parse(response)
+    if (responseJson?.lgtm) {
+      return []
+    }
+
+    const rawReviews = responseJson.reviews
     for (const r of rawReviews) {
       if (r.comment) {
         reviews.push({

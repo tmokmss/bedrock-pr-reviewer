@@ -2290,27 +2290,48 @@ class Bot {
         this.client = new dist_cjs.BedrockRuntimeClient({});
     }
     chat = async (message, prefix) => {
-        let res = ['', {}];
+        let res = '';
         try {
-            res = await this.chat_(message, prefix);
-            return res;
+            res = await this.chat_([
+                { role: 'user', content: `${message}\n${prefix ?? ''}` }
+            ]);
+            return `${prefix ?? ''}${res}`;
         }
         catch (e) {
             (0,core.warning)(`Failed to chat: ${e}`);
             return res;
         }
     };
-    chat_ = async (message, prefix = '') => {
+    roleplayChat = async (prompt) => {
+        try {
+            return await this.chat_(prompt);
+        }
+        catch (e) {
+            (0,core.warning)(`Failed to chat: ${e}`);
+            return '';
+        }
+    };
+    chat_ = async (prompt) => {
         // record timing
         const start = Date.now();
-        if (!message) {
-            return ['', {}];
+        if (!prompt.length) {
+            return '';
         }
         let response;
-        message = `IMPORTANT: Entire response must be in the language with ISO code: ${this.options.language}\n\n${message}`;
+        const messages = prompt.map(m => {
+            return {
+                role: m.role,
+                content: [
+                    {
+                        type: 'text',
+                        text: m.content
+                    }
+                ]
+            };
+        });
         try {
             if (this.options.debug) {
-                (0,core.info)(`sending prompt: ${message}\n------------`);
+                (0,core.info)(`sending prompt: ${JSON.stringify(messages)}\n------------`);
             }
             response = await pRetry(() => this.client.send(new dist_cjs.InvokeModelCommand({
                 modelId: this.bedrockOptions.model,
@@ -2319,31 +2340,9 @@ class Bot {
                     anthropic_version: 'bedrock-2023-05-31',
                     // eslint-disable-next-line camelcase
                     max_tokens: 4096,
-                    temperature: 0,
-                    messages: [
-                        {
-                            role: 'user',
-                            content: [
-                                {
-                                    type: 'text',
-                                    text: message
-                                }
-                            ]
-                        },
-                        ...(prefix
-                            ? [
-                                {
-                                    role: 'assistant',
-                                    content: [
-                                        {
-                                            type: 'text',
-                                            text: prefix
-                                        }
-                                    ]
-                                }
-                            ]
-                            : [])
-                    ]
+                    temperature: this.options.bedrockModelTemperature,
+                    system: `IMPORTANT: Entire response must be in the language with ISO code: ${this.options.language}`,
+                    messages
                 }),
                 contentType: 'application/json',
                 accept: 'application/json'
@@ -2367,11 +2366,7 @@ class Bot {
         if (this.options.debug) {
             (0,core.info)(`bedrock responses: ${responseText}\n-----------`);
         }
-        const newIds = {
-            parentMessageId: response?.$metadata.requestId,
-            conversationId: response?.$metadata.cfId
-        };
-        return [prefix + responseText, newIds];
+        return responseText;
     };
 }
 
@@ -3053,7 +3048,8 @@ class Inputs {
     diff;
     commentChain;
     comment;
-    constructor(systemMessage = '', title = 'no title provided', description = 'no description provided', rawSummary = '', shortSummary = '', reviewFileDiff = '', filename = '', fileContent = 'file contents cannot be provided', fileDiff = 'file diff cannot be provided', patches = '', diff = 'no diff', commentChain = 'no other comments on this patch', comment = 'no comment provided') {
+    commitMessages = [];
+    constructor(systemMessage = '', title = 'no title provided', description = 'no description provided', rawSummary = '', shortSummary = '', reviewFileDiff = '', filename = '', fileContent = 'file contents cannot be provided', fileDiff = 'file diff cannot be provided', patches = '', diff = 'no diff', commentChain = 'no other comments on this patch', comment = 'no comment provided', commitMessages = []) {
         this.systemMessage = systemMessage;
         this.title = title;
         this.description = description;
@@ -3067,9 +3063,10 @@ class Inputs {
         this.diff = diff;
         this.commentChain = commentChain;
         this.comment = comment;
+        this.commitMessages = commitMessages;
     }
     clone() {
-        return new Inputs(this.systemMessage, this.title, this.description, this.rawSummary, this.shortSummary, this.reviewFileDiff, this.filename, this.fileContent, this.fileDiff, this.patches, this.diff, this.commentChain, this.comment);
+        return new Inputs(this.systemMessage, this.title, this.description, this.rawSummary, this.shortSummary, this.reviewFileDiff, this.filename, this.fileContent, this.fileDiff, this.patches, this.diff, this.commentChain, this.comment, [...this.commitMessages]);
     }
     render(content) {
         if (!content) {
@@ -3113,6 +3110,12 @@ class Inputs {
         }
         if (this.comment) {
             content = content.replace('$comment', this.comment);
+        }
+        if (this.commitMessages.length > 0) {
+            const formattedCommitMessages = this.commitMessages
+                .map(({ message }) => `<commit>\n${message}\n</commit>`)
+                .join('\n');
+            content = content.replace('$commit_messages', formattedCommitMessages);
         }
         return content;
     }
@@ -5256,6 +5259,10 @@ $title
 $description
 </pull_request_description>
 
+<commit_messages>
+$commit_messages
+</commit_messages>
+
 <pull_request_diff>
 $file_diff
 </pull_request_diff>
@@ -5302,7 +5309,7 @@ Instructions:
 - Do not mention that these changes affect the logic or functionality of the code.
 - The summary should not exceed 500 words.
 `;
-    reviewFileDiff = `
+    reviewFileDiffSystem = `
 $system_message
 
 <pull_request_title>
@@ -5317,20 +5324,25 @@ $description
 $short_summary
 </pull_request_changes>
 
-## IMPORTANT Instructions
-
 Input: New hunks annotated with line numbers and old hunks (replaced code). Hunks represent incomplete code fragments. Example input is in <example_input> tag below.
-Additional Context: <pull_request_title>, <pull_request_description>, <pull_request_changes> and comment chains. 
+Additional Context: <commit_messages> contain commit messages written by developer, <pull_request_title>, <pull_request_description>, <pull_request_changes> and comment chains. 
 Task: Review new hunks for substantive issues using provided context and respond with comments if necessary.
 Output: Review comments in markdown with exact line number ranges in new hunks. Start and end line numbers must be within the same hunk. For single-line comments, start=end line number. Must use JSON output format in <example_output> tag below.
-Use fenced code blocks using the relevant language identifier where applicable.
-Don't annotate code snippets with line numbers. Format and indent code correctly.
-Do not use \`suggestion\` code blocks.
-For fixes, use \`diff\` code blocks, marking changes with \`+\` or \`-\`. The line number range for comments with fix snippets must exactly match the range to replace in the new hunk.
 
+### System Preamble
+- DO follow "Answering rules" without exception.
+- DO write your answers for a well-educated audience.
+- You will be PENALIZED for useless comments. 
+
+## Answering rules
+* Before raising concerns, carefully review the <commit_messages> context as it may already address potential issues. If you see an answer in commit messages trust them, it means that developer already reviewed concern and incorporated it into proposal.
+* Use fenced code blocks using the relevant language identifier where applicable.
+* Don't annotate code snippets with line numbers. Format and indent code correctly.
+* Do not use \`suggestion\` code blocks.
+* For fixes, use \`diff\` code blocks, marking changes with \`+\` or \`-\`. The line number range for comments with fix snippets must exactly match the range to replace in the new hunk.
 $review_file_diff
 
-If there are no issues found on a line range, you MUST respond with the flag "lgtm": true in the response JSON. Don't stop with unfinished JSON. You MUST output a complete and proper JSON that can be parsed.
+If there are no issues found on a line range, you MUST respond with comment "lgtm". Don't stop with unfinished JSON. You MUST output a complete and proper JSON that can be parsed.
 
 <example_input>
 <new_hunk>
@@ -5366,8 +5378,8 @@ Please review this change.
 \`\`\`
 </comment_chains>
 </example_input>
-
-<example_output>
+`;
+    reviewFileDiffAssistant = `
 {
   "reviews": [
     {
@@ -5383,9 +5395,13 @@ Please review this change.
   ],
   "lgtm": false
 }
-</example_output>
-
+`;
+    reviewFileDiffUser = `
 ## Changes made to \`$filename\` for your review
+
+<commit_messages>
+$commit_messages
+</commit_messages>
 
 $patches
 `;
@@ -5470,7 +5486,20 @@ $comment
         return inputs.render(this.comment);
     }
     renderReviewFileDiff(inputs) {
-        return inputs.render(this.reviewFileDiff);
+        return [
+            {
+                role: 'user',
+                content: inputs.render(this.reviewFileDiffSystem)
+            },
+            {
+                role: 'assistant',
+                content: this.reviewFileDiffAssistant
+            },
+            {
+                role: 'user',
+                content: inputs.render(this.reviewFileDiffUser)
+            }
+        ];
     }
 }
 
@@ -5584,7 +5613,7 @@ const handleReviewComment = async (heavyBot, options, prompts) => {
                 }
             }
             // get tokens so far
-            let tokens = (0,_tokenizer__WEBPACK_IMPORTED_MODULE_4__/* .getTokenCount */ .V)(prompts.renderComment(inputs));
+            let tokens = (0,_tokenizer__WEBPACK_IMPORTED_MODULE_4__/* .getTokenCount */ .VV)(prompts.renderComment(inputs));
             if (tokens > options.heavyTokenLimits.requestTokens) {
                 await commenter.reviewCommentReply(pullNumber, topLevelComment, 'Cannot reply to this comment as diff being commented is too large and exceeds the token limit.');
                 return;
@@ -5593,7 +5622,7 @@ const handleReviewComment = async (heavyBot, options, prompts) => {
             if (fileDiff.length > 0) {
                 // count occurrences of $file_diff in prompt
                 const fileDiffCount = prompts.comment.split('$file_diff').length - 1;
-                const fileDiffTokens = (0,_tokenizer__WEBPACK_IMPORTED_MODULE_4__/* .getTokenCount */ .V)(fileDiff);
+                const fileDiffTokens = (0,_tokenizer__WEBPACK_IMPORTED_MODULE_4__/* .getTokenCount */ .VV)(fileDiff);
                 if (fileDiffCount > 0 &&
                     tokens + fileDiffTokens * fileDiffCount <=
                         options.heavyTokenLimits.requestTokens) {
@@ -5606,7 +5635,7 @@ const handleReviewComment = async (heavyBot, options, prompts) => {
             if (summary) {
                 // pack short summary into the inputs if it is not too long
                 const shortSummary = commenter.getShortSummary(summary.body);
-                const shortSummaryTokens = (0,_tokenizer__WEBPACK_IMPORTED_MODULE_4__/* .getTokenCount */ .V)(shortSummary);
+                const shortSummaryTokens = (0,_tokenizer__WEBPACK_IMPORTED_MODULE_4__/* .getTokenCount */ .VV)(shortSummary);
                 if (tokens + shortSummaryTokens <=
                     options.heavyTokenLimits.requestTokens) {
                     tokens += shortSummaryTokens;
@@ -5616,7 +5645,7 @@ const handleReviewComment = async (heavyBot, options, prompts) => {
             inputs.commentChain = inputs.commentChain
                 .replace(_commenter__WEBPACK_IMPORTED_MODULE_2__/* .COMMENT_TAG */ .Rs, '')
                 .replace(_commenter__WEBPACK_IMPORTED_MODULE_2__/* .COMMENT_REPLY_TAG */ .aD, '');
-            const [reply] = await heavyBot.chat(prompts.renderComment(inputs));
+            const reply = await heavyBot.chat(prompts.renderComment(inputs));
             await commenter.reviewCommentReply(pullNumber, topLevelComment, reply);
         }
     }
@@ -5898,6 +5927,12 @@ const codeReview = async (lightBot, heavyBot, options, prompts) => {
         (0,core.warning)('Skipped: commits is null');
         return;
     }
+    // Fetch commit messages
+    const commitMessages = commits.map(commit => ({
+        sha: commit.sha,
+        message: commit.commit.message
+    }));
+    inputs.commitMessages = commitMessages;
     // find hunks to review
     const filteredFiles = await Promise.all(filterSelectedFiles.map(file => githubConcurrencyLimit(async () => {
         // retrieve file contents
@@ -6014,7 +6049,7 @@ ${filterIgnoredFiles.length > 0
         ins.fileDiff = fileDiff;
         // render prompt based on inputs so far
         const summarizePrompt = prompts.renderSummarizeFileDiff(ins, options.reviewSimpleChanges);
-        const tokens = (0,tokenizer/* getTokenCount */.V)(summarizePrompt);
+        const tokens = (0,tokenizer/* getTokenCount */.VV)(summarizePrompt);
         if (tokens > options.lightTokenLimits.requestTokens) {
             (0,core.info)(`summarize: diff tokens exceeds limit, skip ${filename}`);
             summariesFailed.push(`${filename} (diff tokens exceeds limit)`);
@@ -6022,7 +6057,7 @@ ${filterIgnoredFiles.length > 0
         }
         // summarize content
         try {
-            const [summarizeResp] = await lightBot.chat(summarizePrompt);
+            const summarizeResp = await lightBot.chat(summarizePrompt);
             if (summarizeResp === '') {
                 (0,core.info)('summarize: nothing obtained from bedrock');
                 summariesFailed.push(`${filename} (nothing obtained from bedrock)`);
@@ -6076,7 +6111,7 @@ ${filename}: ${summary}
 `;
             }
             // ask Bedrock to summarize the summaries
-            const [summarizeResp] = await heavyBot.chat(prompts.renderSummarizeChangesets(inputs));
+            const summarizeResp = await heavyBot.chat(prompts.renderSummarizeChangesets(inputs));
             if (summarizeResp === '') {
                 (0,core.warning)('summarize: nothing obtained from bedrock');
             }
@@ -6086,13 +6121,13 @@ ${filename}: ${summary}
         }
     }
     // final summary
-    const [summarizeFinalResponse] = await heavyBot.chat(prompts.renderSummarize(inputs));
+    const summarizeFinalResponse = await heavyBot.chat(prompts.renderSummarize(inputs));
     if (summarizeFinalResponse === '') {
         (0,core.info)('summarize: nothing obtained from bedrock');
     }
     if (options.disableReleaseNotes === false) {
         // final release notes
-        const [releaseNotesResponse] = await heavyBot.chat(prompts.renderSummarizeReleaseNotes(inputs));
+        const releaseNotesResponse = await heavyBot.chat(prompts.renderSummarizeReleaseNotes(inputs));
         if (releaseNotesResponse === '') {
             (0,core.info)('release notes: nothing obtained from bedrock');
         }
@@ -6108,7 +6143,7 @@ ${filename}: ${summary}
         }
     }
     // generate a short summary as well
-    const [summarizeShortResponse] = await heavyBot.chat(prompts.renderSummarizeShort(inputs));
+    const summarizeShortResponse = await heavyBot.chat(prompts.renderSummarizeShort(inputs));
     inputs.shortSummary = summarizeShortResponse;
     let summarizeComment = `${summarizeFinalResponse}
 ${lib_commenter/* RAW_SUMMARY_START_TAG */.oi}
@@ -6158,11 +6193,11 @@ ${summariesFailed.length > 0
             const ins = inputs.clone();
             ins.filename = filename;
             // calculate tokens based on inputs so far
-            let tokens = (0,tokenizer/* getTokenCount */.V)(prompts.renderReviewFileDiff(ins));
+            let tokens = (0,tokenizer/* getTokenCountRolePlay */.c1)(prompts.renderReviewFileDiff(ins));
             // loop to calculate total patch tokens
             let patchesToPack = 0;
             for (const [, , patch] of patches) {
-                const patchTokens = (0,tokenizer/* getTokenCount */.V)(patch);
+                const patchTokens = (0,tokenizer/* getTokenCount */.VV)(patch);
                 if (tokens + patchTokens > options.heavyTokenLimits.requestTokens) {
                     (0,core.info)(`only packing ${patchesToPack} / ${patches.length} patches, tokens: ${tokens} / ${options.heavyTokenLimits.requestTokens}`);
                     break;
@@ -6197,7 +6232,7 @@ ${summariesFailed.length > 0
                     (0,core.warning)(`Failed to get comments: ${e}, skipping. backtrace: ${e.stack}`);
                 }
                 // try packing comment_chain into this request
-                const commentChainTokens = (0,tokenizer/* getTokenCount */.V)(commentChain);
+                const commentChainTokens = (0,tokenizer/* getTokenCount */.VV)(commentChain);
                 if (tokens + commentChainTokens >
                     options.heavyTokenLimits.requestTokens) {
                     commentChain = '';
@@ -6221,7 +6256,7 @@ ${commentChain}
             if (patchesPacked > 0) {
                 // perform review
                 try {
-                    const [response] = await heavyBot.chat(prompts.renderReviewFileDiff(ins), '{');
+                    const response = await heavyBot.roleplayChat(prompts.renderReviewFileDiff(ins));
                     if (response === '') {
                         (0,core.info)('review: nothing obtained from bedrock');
                         reviewsFailed.push(`${filename} (no response)`);
@@ -6233,6 +6268,7 @@ ${commentChain}
                         // check for LGTM
                         if (!options.reviewCommentLGTM &&
                             (review.comment.includes('LGTM') ||
+                                review.comment.includes('lgtm') ||
                                 review.comment.includes('looks good to me'))) {
                             lgtmCount += 1;
                             continue;
@@ -6419,7 +6455,11 @@ function parseReview(response,
 patches) {
     const reviews = [];
     try {
-        const rawReviews = JSON.parse(response).reviews;
+        const responseJson = JSON.parse(response);
+        if (responseJson?.lgtm) {
+            return [];
+        }
+        const rawReviews = responseJson.reviews;
         for (const r of rawReviews) {
             if (r.comment) {
                 reviews.push({
@@ -6445,7 +6485,8 @@ patches) {
 
 "use strict";
 /* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
-/* harmony export */   "V": () => (/* binding */ getTokenCount)
+/* harmony export */   "VV": () => (/* binding */ getTokenCount),
+/* harmony export */   "c1": () => (/* binding */ getTokenCountRolePlay)
 /* harmony export */ });
 /* unused harmony export encode */
 /* harmony import */ var _dqbd_tiktoken__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(3171);
@@ -6458,6 +6499,10 @@ function encode(input) {
 function getTokenCount(input) {
     input = input.replace(/<\|endoftext\|>/g, '');
     return encode(input).length;
+}
+function getTokenCountRolePlay(input) {
+    const raw = input.map(m => encode(m.content.replace(/<\|endoftext\|>/g, '')).length);
+    return raw.reduce((a, c) => a + c);
 }
 
 

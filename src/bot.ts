@@ -15,6 +15,11 @@ export interface Ids {
   conversationId?: string
 }
 
+export interface Message {
+  role: string
+  content: string
+}
+
 export class Bot {
   private readonly client: BedrockRuntimeClient
 
@@ -27,33 +32,51 @@ export class Bot {
     this.client = new BedrockRuntimeClient({})
   }
 
-  chat = async (message: string, prefix?: string): Promise<[string, Ids]> => {
-    let res: [string, Ids] = ['', {}]
+  chat = async (message: string, prefix?: string): Promise<string> => {
+    let res = ''
     try {
-      res = await this.chat_(message, prefix)
-      return res
+      res = await this.chat_([
+        {role: 'user', content: `${message}\n${prefix ?? ''}`}
+      ])
+      return `${prefix ?? ''}${res}`
     } catch (e: unknown) {
       warning(`Failed to chat: ${e}`)
       return res
     }
   }
 
-  private readonly chat_ = async (
-    message: string,
-    prefix: string = ''
-  ): Promise<[string, Ids]> => {
+  roleplayChat = async (prompt: Array<Message>) => {
+    try {
+      return await this.chat_(prompt)
+    } catch (e: unknown) {
+      warning(`Failed to chat: ${e}`)
+      return ''
+    }
+  }
+
+  private readonly chat_ = async (prompt: Array<Message>): Promise<string> => {
     // record timing
     const start = Date.now()
-    if (!message) {
-      return ['', {}]
+    if (!prompt.length) {
+      return ''
     }
 
     let response: InvokeModelCommandOutput | undefined
+    const messages = prompt.map(m => {
+      return {
+        role: m.role,
+        content: [
+          {
+            type: 'text',
+            text: m.content
+          }
+        ]
+      }
+    })
 
-    message = `IMPORTANT: Entire response must be in the language with ISO code: ${this.options.language}\n\n${message}`
     try {
       if (this.options.debug) {
-        info(`sending prompt: ${message}\n------------`)
+        info(`sending prompt: ${JSON.stringify(messages)}\n------------`)
       }
       response = await pRetry(
         () =>
@@ -65,31 +88,9 @@ export class Bot {
                 anthropic_version: 'bedrock-2023-05-31',
                 // eslint-disable-next-line camelcase
                 max_tokens: 4096,
-                temperature: 0,
-                messages: [
-                  {
-                    role: 'user',
-                    content: [
-                      {
-                        type: 'text',
-                        text: message
-                      }
-                    ]
-                  },
-                  ...(prefix
-                    ? [
-                        {
-                          role: 'assistant',
-                          content: [
-                            {
-                              type: 'text',
-                              text: prefix
-                            }
-                          ]
-                        }
-                      ]
-                    : [])
-                ]
+                temperature: this.options.bedrockModelTemperature,
+                system: `IMPORTANT: Entire response must be in the language with ISO code: ${this.options.language}`,
+                messages
               }),
               contentType: 'application/json',
               accept: 'application/json'
@@ -117,10 +118,7 @@ export class Bot {
     if (this.options.debug) {
       info(`bedrock responses: ${responseText}\n-----------`)
     }
-    const newIds: Ids = {
-      parentMessageId: response?.$metadata.requestId,
-      conversationId: response?.$metadata.cfId
-    }
-    return [prefix + responseText, newIds]
+
+    return responseText
   }
 }

@@ -12,6 +12,7 @@ export class Inputs {
   diff: string
   commentChain: string
   comment: string
+  commitMessages: Array<{sha: string; message: string}> = []
 
   constructor(
     systemMessage = '',
@@ -26,7 +27,8 @@ export class Inputs {
     patches = '',
     diff = 'no diff',
     commentChain = 'no other comments on this patch',
-    comment = 'no comment provided'
+    comment = 'no comment provided',
+    commitMessages: Array<{sha: string; message: string}> = []
   ) {
     this.systemMessage = systemMessage
     this.title = title
@@ -41,6 +43,7 @@ export class Inputs {
     this.diff = diff
     this.commentChain = commentChain
     this.comment = comment
+    this.commitMessages = commitMessages
   }
 
   clone(): Inputs {
@@ -57,7 +60,8 @@ export class Inputs {
       this.patches,
       this.diff,
       this.commentChain,
-      this.comment
+      this.comment,
+      [...this.commitMessages]
     )
   }
 
@@ -103,6 +107,12 @@ export class Inputs {
     }
     if (this.comment) {
       content = content.replace('$comment', this.comment)
+    }
+    if (this.commitMessages.length > 0) {
+      const formattedCommitMessages = this.commitMessages
+        .map(({message}) => `<commit>\n${message}\n</commit>`)
+        .join('\n')
+      content = content.replace('$commit_messages', formattedCommitMessages)
     }
     return content
   }
