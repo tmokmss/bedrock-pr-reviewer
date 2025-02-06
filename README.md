@@ -3,7 +3,7 @@ This is a modified version of [coderabbitai/ai-pr-reviewer](https://github.com/c
 
 ## Overview
 
-`ai-pr-reviewer` is an AI-based code reviewer and summarizer for GitHub pull requests using Bedrock's Anthropic Claude models. It is designed to be used as a GitHub Action and can be configured to run on every pull request and review comments.
+PR SideKick is an AI-based code reviewer and summarizer for GitHub pull requests using Bedrock's Anthropic Claude models. It is designed to be used as a GitHub Action and can be configured to run on every pull request and review comments.
 
 ## Reviewer Features:
 
@@ -140,7 +140,7 @@ tagging it in the comment (`/reviewbot`).
 
 Example:
 
-> /reviewbot Please generate a test plan for this file.
+> @prsidekick Please generate a test plan for this file.
 
 Note: A review comment is a comment made on a diff or a file in the pull
 request.
@@ -152,7 +152,7 @@ to review documentation, you can ignore PRs that only change the documentation.
 To ignore a PR, add the following keyword in the PR description:
 
 ```text
-/reviewbot: ignore
+@prsidekick: ignore
 ```
 
 ## Examples
@@ -229,7 +229,7 @@ jobs:
           role-session-name: gha-session
           aws-region: us-east-1
       - name: PR review
-        uses: tmokmss/bedrock-pr-reviewer@main
+        uses: Spcs-Innovation-Tech-Dev/bedrock-pr-reviewer@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:

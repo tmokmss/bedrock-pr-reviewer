@@ -7,40 +7,40 @@ import {octokit} from './octokit'
 const context = github_context
 const repo = context.repo
 
-export const COMMENT_GREETING = '' //`${getInput('bot_icon')}`
+export const COMMENT_GREETING = '' //`${getInput('bot_icon')} PR SideKick`
 
 export const COMMENT_TAG =
-  '<!-- This is an auto-generated comment by AI reviewer -->'
+  '<!-- This is an auto-generated comment by PR SideKick -->'
 
 export const COMMENT_REPLY_TAG =
-  '<!-- This is an auto-generated reply by AI reviewer -->'
+  '<!-- This is an auto-generated reply by PR SideKick -->'
 
 export const SUMMARIZE_TAG =
-  '<!-- This is an auto-generated comment: summarize by AI reviewer -->'
+  '<!-- This is an auto-generated comment: summarize by PR SideKick -->'
 
 export const IN_PROGRESS_START_TAG =
-  '<!-- This is an auto-generated comment: summarize review in progress by AI reviewer -->'
+  '<!-- This is an auto-generated comment: summarize review in progress by PR SideKick -->'
 
 export const IN_PROGRESS_END_TAG =
-  '<!-- end of auto-generated comment: summarize review in progress by AI reviewer -->'
+  '<!-- end of auto-generated comment: summarize review in progress by PR SideKick -->'
 
 export const DESCRIPTION_START_TAG =
-  '<!-- This is an auto-generated comment: release notes by AI reviewer -->'
+  '<!-- This is an auto-generated comment: release notes by PR SideKick -->'
 export const DESCRIPTION_END_TAG =
-  '<!-- end of auto-generated comment: release notes by AI reviewer -->'
+  '<!-- end of auto-generated comment: release notes by PR SideKick -->'
 
-export const RAW_SUMMARY_START_TAG = `<!-- This is an auto-generated comment: raw summary by AI reviewer -->
+export const RAW_SUMMARY_START_TAG = `<!-- This is an auto-generated comment: raw summary by PR SideKick -->
 <!--
 `
 export const RAW_SUMMARY_END_TAG = `-->
-<!-- end of auto-generated comment: raw summary by AI reviewer -->`
+<!-- end of auto-generated comment: raw summary by PR SideKick -->`
 
-export const SHORT_SUMMARY_START_TAG = `<!-- This is an auto-generated comment: short summary by AI reviewer -->
+export const SHORT_SUMMARY_START_TAG = `<!-- This is an auto-generated comment: short summary by PR SideKick -->
 <!--
 `
 
 export const SHORT_SUMMARY_END_TAG = `-->
-<!-- end of auto-generated comment: short summary by AI reviewer -->`
+<!-- end of auto-generated comment: short summary by PR SideKick -->`
 
 export const COMMIT_ID_START_TAG = '<!-- commit_ids_reviewed_start -->'
 export const COMMIT_ID_END_TAG = '<!-- commit_ids_reviewed_end -->'
