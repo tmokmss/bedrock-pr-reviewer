@@ -10,7 +10,7 @@ Description: >
 Parameters:
   SubjectClaimFilters:
     Type: CommaDelimitedList
-    Default: "repo:tmokmss/bedrock-review-test:*"
+    Default: "repo:Spcs-Innovation-Tech/*,repo:Spcs-Innovation-Tech-Dev/*"
     Description: >
       Subject claim filter for valid tokens.
       See https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#example-subject-claims
@@ -30,7 +30,7 @@ Resources:
     Properties:
       Url: https://token.actions.githubusercontent.com
       ThumbprintList: 
-        - "1234567890123456789012345678901234567890"
+        - "D89E3BD43D5D909B47A18977AA9D5CE36CEE184C"
       ClientIdList: 
         - sts.amazonaws.com
   GitHubActionsServiceRole:
@@ -60,7 +60,9 @@ Resources:
         Statement:
           - Effect: Allow
             Action: 'bedrock:InvokeModel'
-            Resource: '*'
+            Resource: 
+            - !Sub 'arn:aws:bedrock:${AWS::Region}::foundation-model/anthropic.claude-3-haiku-20240307-v1:0'
+            - !Sub 'arn:aws:bedrock:${AWS::Region}::foundation-model/anthropic.claude-3-5-sonnet-20240620-v1:0'
       RoleName: !Ref GitHubActionsServiceRole
 
 Outputs:

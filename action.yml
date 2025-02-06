@@ -156,7 +156,7 @@ inputs:
   bedrock_heavy_model:
     required: false
     description: 'Model to use for complex tasks such as code reviews.'
-    default: 'anthropic.claude-3-sonnet-20240229-v1:0'
+    default: 'anthropic.claude-3-5-sonnet-20240620-v1:0'
   bedrock_model_temperature:
     required: false
     description: 'Temperature for GPT model'
