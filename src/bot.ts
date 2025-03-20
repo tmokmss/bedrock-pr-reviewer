@@ -2,8 +2,8 @@ import './fetch-polyfill'
 
 import {
   BedrockRuntimeClient,
-  InvokeModelCommand,
-  InvokeModelCommandOutput
+  ConverseCommand,
+  ConverseCommandOutput
 } from '@aws-sdk/client-bedrock-runtime'
 import {info, warning} from '@actions/core'
 import pRetry from 'p-retry'
@@ -48,7 +48,7 @@ export class Bot {
       return ['', {}]
     }
 
-    let response: InvokeModelCommandOutput | undefined
+    let response: ConverseCommandOutput | undefined
 
     message = `IMPORTANT: Entire response must be in the language with ISO code: ${this.options.language}\n\n${message}`
     try {
@@ -58,41 +58,34 @@ export class Bot {
       response = await pRetry(
         () =>
           this.client.send(
-            new InvokeModelCommand({
+            new ConverseCommand({
               modelId: this.bedrockOptions.model,
-              body: JSON.stringify({
-                // eslint-disable-next-line camelcase
-                anthropic_version: 'bedrock-2023-05-31',
-                // eslint-disable-next-line camelcase
-                max_tokens: 4096,
-                temperature: 0,
-                messages: [
-                  {
-                    role: 'user',
-                    content: [
+              messages: [
+                {
+                  role: 'user',
+                  content: [
+                    {
+                      text: message
+                    }
+                  ]
+                },
+                ...(prefix
+                  ? [
                       {
-                        type: 'text',
-                        text: message
+                        role: 'assistant' as const,
+                        content: [
+                          {
+                            text: prefix
+                          }
+                        ]
                       }
                     ]
-                  },
-                  ...(prefix
-                    ? [
-                        {
-                          role: 'assistant',
-                          content: [
-                            {
-                              type: 'text',
-                              text: prefix
-                            }
-                          ]
-                        }
-                      ]
-                    : [])
-                ]
-              }),
-              contentType: 'application/json',
-              accept: 'application/json'
+                  : [])
+              ],
+              inferenceConfig: {
+                maxTokens: 4096,
+                temperature: 0
+              }
             })
           ),
         {
@@ -108,9 +101,8 @@ export class Bot {
     )
 
     let responseText = ''
-    if (response != null) {
-      responseText = JSON.parse(Buffer.from(response.body).toString('utf-8'))
-        .content?.[0]?.text
+    if (response?.output?.message != null) {
+      responseText = response.output?.message.content?.at(-1)?.text ?? ''
     } else {
       warning('bedrock response is null')
     }
