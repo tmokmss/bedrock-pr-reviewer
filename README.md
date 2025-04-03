@@ -1,3 +1,6 @@
+> [!CAUTION]
+> The `main` branch is now deprecated and no longer maintained. Use the v1 or later branch instead.
+
 # AI-based PR reviewer and summarizer w/ Amazon Bedrock Claude
 This is a modified version of [coderabbitai/ai-pr-reviewer](https://github.com/coderabbitai/ai-pr-reviewer) to use Amazon Bedrock instead.
 
