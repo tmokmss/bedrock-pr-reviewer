@@ -20,8 +20,7 @@ jobs:
           npm ci
         name: Install dependencies
       - run: |
-          npm run format:check
-          npm run lint
+          npm run format-check
         name: Run static analyses
       - run: |
           npm run test

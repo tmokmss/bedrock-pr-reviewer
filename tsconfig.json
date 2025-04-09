@@ -15,5 +15,5 @@
     "noImplicitAny": false,
     "esModuleInterop": true
   },
-  "exclude": ["dist", "lib", "node_modules", "**/*.test.ts"]
+  "exclude": ["dist", "lib", "node_modules", "**/*.test.ts", "eslint.config.mjs"]
 }
