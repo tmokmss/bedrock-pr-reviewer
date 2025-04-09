@@ -286,7 +286,12 @@ ${statusMsg}
 
     await this.deletePendingReview(pullNumber)
 
-    const generateCommentData = (comment: any) => {
+    const generateCommentData = (comment: {
+      path: string
+      message: string
+      startLine: number
+      endLine: number
+    }) => {
       const commentData: any = {
         path: comment.path,
         body: comment.message,
@@ -386,7 +391,7 @@ ${COMMENT_REPLY_TAG}
         // eslint-disable-next-line camelcase
         comment_id: topLevelComment.id
       })
-    } catch (error) {
+    } catch (error: unknown) {
       warning(`Failed to reply to the top-level comment ${error}`)
       try {
         await octokit.pulls.createReplyForReviewComment({
@@ -417,7 +422,7 @@ ${COMMENT_REPLY_TAG}
           body: newBody
         })
       }
-    } catch (error) {
+    } catch (error: unknown) {
       warning(`Failed to update the top-level comment ${error}`)
     }
   }
@@ -472,7 +477,7 @@ ${COMMENT_REPLY_TAG}
       endLine
     )
     // find all top most comments
-    const topLevelComments = []
+    const topLevelComments: any[] = []
     for (const comment of existingComments) {
       if (!comment.in_reply_to_id) {
         topLevelComments.push(comment)
@@ -674,7 +679,7 @@ ${chain}
 
       this.issueCommentsCache[target] = allComments
       return allComments
-    } catch (e: any) {
+    } catch (e: unknown) {
       warning(`Failed to list comments: ${e}`)
       return allComments
     }
@@ -737,7 +742,7 @@ ${chain}
   }
 
   async getAllCommitIds(): Promise<string[]> {
-    const allCommits = []
+    const allCommits: string[] = []
     let page = 1
     let commits
     if (context && context.payload && context.payload.pull_request != null) {
@@ -752,7 +757,7 @@ ${chain}
           page
         })
 
-        allCommits.push(...commits.data.map(commit => commit.sha))
+        allCommits.push(...commits.data.map((commit: any) => commit.sha))
         page++
       } while (commits.data.length > 0)
     }

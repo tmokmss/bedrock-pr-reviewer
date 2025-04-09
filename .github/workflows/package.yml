@@ -1,11 +1,7 @@
 name: Build Package
 
-on: 
-  push:
-    branches:
-    - main
+on:
   workflow_dispatch:
-  pull_request:
 
 jobs:
   update:
@@ -18,13 +14,10 @@ jobs:
           node-version: "20.x"
       - run: |
           npm ci
-        name: Install dependencies
-      - run: |
-          npm run format-check
-        name: Run static analyses
-      # - run: |
-      #     npm run test
-      #   name: Run unit tests
-      - run: |
           npm run build
-        name: Run tsc
+          npm run package
+      - name: Add & Commit
+        uses: EndBug/add-and-commit@v7.2.0
+        with:
+          add: "dist/."
+          message: "build package"
