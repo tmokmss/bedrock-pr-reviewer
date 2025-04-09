@@ -129,10 +129,10 @@ class Bot {
         this.bedrockOptions = bedrockOptions;
         this.client = new dist_cjs.BedrockRuntimeClient({});
     }
-    chat = async (message, prefix) => {
+    chat = async (message, jsonSchema) => {
         let res = ['', {}];
         try {
-            res = await this.chat_(message, prefix);
+            res = await this.chat_(message, jsonSchema);
             return res;
         }
         catch (e) {
@@ -140,7 +140,7 @@ class Bot {
             return res;
         }
     };
-    chat_ = async (message, prefix = '') => {
+    chat_ = async (message, jsonSchema) => {
         // record timing
         const start = Date.now();
         if (!message) {
@@ -148,11 +148,14 @@ class Bot {
         }
         let response;
         message = `IMPORTANT: Entire response must be in the language with ISO code: ${this.options.language}\n\n${message}`;
-        try {
-            if (this.options.debug) {
-                (0,core.info)(`sending prompt: ${message}\n------------`);
+        if (this.options.debug) {
+            (0,core.info)(`sending prompt: ${message}\n------------`);
+            if (jsonSchema) {
+                (0,core.info)(`Using JSON schema: ${JSON.stringify(jsonSchema)}`);
             }
-            response = await pRetry(() => this.client.send(new dist_cjs.ConverseCommand({
+        }
+        try {
+            const commandParams = {
                 modelId: this.bedrockOptions.model,
                 messages: [
                     {
@@ -162,25 +165,31 @@ class Bot {
                                 text: message
                             }
                         ]
-                    },
-                    ...(prefix
-                        ? [
-                            {
-                                role: 'assistant',
-                                content: [
-                                    {
-                                        text: prefix
-                                    }
-                                ]
-                            }
-                        ]
-                        : [])
+                    }
                 ],
                 inferenceConfig: {
                     maxTokens: 4096,
                     temperature: 0
                 }
-            })), {
+            };
+            // Add tool configuration if jsonSchema is provided
+            if (jsonSchema) {
+                const toolConfig = {
+                    tools: [
+                        {
+                            toolSpec: {
+                                name: jsonSchema.name,
+                                description: jsonSchema.description,
+                                inputSchema: {
+                                    json: jsonSchema.parameters
+                                }
+                            }
+                        }
+                    ]
+                };
+                commandParams.toolConfig = toolConfig;
+            }
+            response = await pRetry(() => this.client.send(new dist_cjs.ConverseCommand(commandParams)), {
                 retries: this.options.bedrockRetries
             });
         }
@@ -191,7 +200,23 @@ class Bot {
         (0,core.info)(`bedrock sendMessage (including retries) response time: ${end - start} ms`);
         let responseText = '';
         if (response?.output?.message != null) {
-            responseText = response.output?.message.content?.at(-1)?.text ?? '';
+            // Check if the response contains a tool use (JSON output)
+            const content = response.output.message.content || [];
+            for (const item of content) {
+                if (item.text) {
+                    responseText += item.text;
+                }
+                else if (item.toolUse) {
+                    // For JSON schema tool use, the input will contain the generated JSON
+                    try {
+                        responseText = JSON.stringify(item.toolUse.input);
+                    }
+                    catch (e) {
+                        (0,core.warning)(`Failed to parse tool use input as JSON: ${e}`);
+                        responseText = '';
+                    }
+                }
+            }
         }
         else {
             (0,core.warning)('bedrock response is null');
@@ -203,7 +228,7 @@ class Bot {
             parentMessageId: response?.$metadata.requestId,
             conversationId: response?.$metadata.cfId
         };
-        return [prefix + responseText, newIds];
+        return [responseText, newIds];
     };
 }
 
@@ -3419,15 +3444,23 @@ $short_summary
 Input: New hunks annotated with line numbers and old hunks (replaced code). Hunks represent incomplete code fragments. Example input is in <example_input> tag below.
 Additional Context: <pull_request_title>, <pull_request_description>, <pull_request_changes> and comment chains. 
 Task: Review new hunks for substantive issues using provided context and respond with comments if necessary.
-Output: Review comments in markdown with exact line number ranges in new hunks. Start and end line numbers must be within the same hunk. For single-line comments, start=end line number. Must use JSON output format in <example_output> tag below.
-Use fenced code blocks using the relevant language identifier where applicable.
+
+You MUST use the JSON output tool to generate your response in the proper format. The JSON must contain:
+- An array of "reviews" with each having: line_start (integer), line_end (integer), and comment (string)
+- A boolean "lgtm" flag set to true if there are no issues found
+
+Review comments should be in markdown. Start and end line numbers must be within the same hunk. For single-line comments, use the same line number for start and end. 
+Use fenced code blocks with the relevant language identifier where applicable.
 Don't annotate code snippets with line numbers. Format and indent code correctly.
-Do not use \`suggestion\` code blocks.
-For fixes, use \`diff\` code blocks, marking changes with \`+\` or \`-\`. The line number range for comments with fix snippets must exactly match the range to replace in the new hunk.
+For code modification suggestions, you MUST use GitHub's native "suggestion" format.
+Do NOT use \`diff\` code blocks for suggestions.
+Format your suggestions exactly like this, replacing the placeholder with the complete code snippet for the suggested lines:
+\`\`\`suggestion
+[The new code that should replace the original lines]
+\`\`\`
+Make sure the suggestion block contains the full content of the lines to be replaced.
 
 $review_file_diff
-
-If there are no issues found on a line range, you MUST respond with the flag "lgtm": true in the response JSON. Don't stop with unfinished JSON. You MUST output a complete and proper JSON that can be parsed.
 
 <example_input>
 <new_hunk>
@@ -3463,24 +3496,6 @@ Please review this change.
 \`\`\`
 </comment_chains>
 </example_input>
-
-<example_output>
-{
-  "reviews": [
-    {
-      "line_start": 22,
-      "line_end": 22,
-      "comment": "There's a syntax error in the add function.\\n  -    retrn z\\n  +    return z",
-    },
-    {
-      "line_start": 23,
-      "line_end": 24,
-      "comment": "There's a redundant new line here. It should be only one.",
-    }
-  ],
-  "lgtm": false
-}
-</example_output>
 
 ## Changes made to \`$filename\` for your review
 
@@ -4318,7 +4333,30 @@ ${commentChain}
             if (patchesPacked > 0) {
                 // perform review
                 try {
-                    const [response] = await heavyBot.chat(prompts.renderReviewFileDiff(ins), '{');
+                    const reviewJsonSchema = {
+                        name: 'generate_review_json',
+                        description: 'Generate review comments in JSON format',
+                        parameters: {
+                            type: 'object',
+                            properties: {
+                                reviews: {
+                                    type: 'array',
+                                    items: {
+                                        type: 'object',
+                                        properties: {
+                                            line_start: { type: 'integer' },
+                                            line_end: { type: 'integer' },
+                                            comment: { type: 'string' }
+                                        },
+                                        required: ['line_start', 'line_end', 'comment']
+                                    }
+                                },
+                                lgtm: { type: 'boolean' }
+                            },
+                            required: ['reviews', 'lgtm']
+                        }
+                    };
+                    const [response] = await heavyBot.chat(prompts.renderReviewFileDiff(ins), reviewJsonSchema);
                     if (response === '') {
                         (0,core.info)('review: nothing obtained from bedrock');
                         reviewsFailed.push(`${filename} (no response)`);
@@ -4516,7 +4554,22 @@ function parseReview(response,
 patches) {
     const reviews = [];
     try {
-        const rawReviews = JSON.parse(response).reviews;
+        let parsedResponse;
+        // Check if the response is already a JSON string from tool use
+        try {
+            parsedResponse = JSON.parse(response);
+        }
+        catch (parseErr) {
+            // If it fails, try to extract JSON from the text response
+            const jsonMatch = response.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                parsedResponse = JSON.parse(jsonMatch[0]);
+            }
+            else {
+                throw new Error('Could not extract JSON from response');
+            }
+        }
+        const rawReviews = parsedResponse.reviews || [];
         for (const r of rawReviews) {
             if (r.comment) {
                 reviews.push({
@@ -4528,7 +4581,8 @@ patches) {
         }
     }
     catch (e) {
-        (0,core.error)(e.message);
+        (0,core.error)(`Failed to parse review response: ${e.message}`);
+        (0,core.error)(`Response was: ${response}`);
         return [];
     }
     return reviews;
