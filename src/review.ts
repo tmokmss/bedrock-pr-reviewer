@@ -604,29 +604,29 @@ ${commentChain}
         // perform review
         try {
           const reviewJsonSchema = {
-            name: "generate_review_json",
-            description: "Generate review comments in JSON format",
+            name: 'generate_review_json',
+            description: 'Generate review comments in JSON format',
             parameters: {
-              type: "object",
+              type: 'object',
               properties: {
                 reviews: {
-                  type: "array",
+                  type: 'array',
                   items: {
-                    type: "object",
+                    type: 'object',
                     properties: {
-                      line_start: {type: "integer"},
-                      line_end: {type: "integer"},
-                      comment: {type: "string"}
+                      line_start: {type: 'integer'},
+                      line_end: {type: 'integer'},
+                      comment: {type: 'string'}
                     },
-                    required: ["line_start", "line_end", "comment"]
+                    required: ['line_start', 'line_end', 'comment']
                   }
                 },
-                lgtm: {type: "boolean"}
+                lgtm: {type: 'boolean'}
               },
-              required: ["reviews", "lgtm"]
+              required: ['reviews', 'lgtm']
             }
           }
-          
+
           const [response] = await heavyBot.chat(
             prompts.renderReviewFileDiff(ins),
             '{',
@@ -885,21 +885,21 @@ function parseReview(
   const reviews: Review[] = []
 
   try {
-    let parsedResponse;
+    let parsedResponse
     // Check if the response is already a JSON string from tool use
     try {
-      parsedResponse = JSON.parse(response);
+      parsedResponse = JSON.parse(response)
     } catch (parseErr) {
       // If it fails, try to extract JSON from the text response
-      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      const jsonMatch = response.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
-        parsedResponse = JSON.parse(jsonMatch[0]);
+        parsedResponse = JSON.parse(jsonMatch[0])
       } else {
-        throw new Error('Could not extract JSON from response');
+        throw new Error('Could not extract JSON from response')
       }
     }
 
-    const rawReviews = parsedResponse.reviews || [];
+    const rawReviews = parsedResponse.reviews || []
     for (const r of rawReviews) {
       if (r.comment) {
         reviews.push({

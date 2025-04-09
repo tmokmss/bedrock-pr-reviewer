@@ -32,7 +32,11 @@ export class Bot {
     this.client = new BedrockRuntimeClient({})
   }
 
-  chat = async (message: string, prefix?: string, jsonSchema?: JsonSchema): Promise<[string, Ids]> => {
+  chat = async (
+    message: string,
+    prefix?: string,
+    jsonSchema?: JsonSchema
+  ): Promise<[string, Ids]> => {
     let res: [string, Ids] = ['', {}]
     try {
       res = await this.chat_(message, prefix, jsonSchema)
@@ -57,14 +61,14 @@ export class Bot {
     let response: ConverseCommandOutput | undefined
 
     message = `IMPORTANT: Entire response must be in the language with ISO code: ${this.options.language}\n\n${message}`
-    
+
     if (this.options.debug) {
       info(`sending prompt: ${message}\n------------`)
       if (jsonSchema) {
         info(`Using JSON schema: ${JSON.stringify(jsonSchema)}`)
       }
     }
-    
+
     try {
       const commandParams: any = {
         modelId: this.bedrockOptions.model,
