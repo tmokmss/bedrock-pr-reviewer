@@ -143,8 +143,8 @@ export const codeReview = async (
   }
 
   // skip files if they are filtered out
-  const filterSelectedFiles = []
-  const filterIgnoredFiles = []
+  const filterSelectedFiles: any[] = []
+  const filterIgnoredFiles: any[] = []
   for (const file of files) {
     if (!options.checkPath(file.filename)) {
       info(`skip for excluded path: ${file.filename}`)
@@ -170,7 +170,7 @@ export const codeReview = async (
   const filteredFiles: Array<
     [string, string, string, Array<[number, number, string]>] | null
   > = await Promise.all(
-    filterSelectedFiles.map(file =>
+    filterSelectedFiles.map((file: any) =>
       githubConcurrencyLimit(async () => {
         // retrieve file contents
         let fileContent = ''
@@ -372,8 +372,8 @@ ${
     }
   }
 
-  const summaryPromises = []
-  const skippedFiles = []
+  const summaryPromises: Promise<[string, string, boolean] | null>[] = []
+  const skippedFiles: string[] = []
   for (const [filename, fileContent, fileDiff] of filesAndChanges) {
     if (options.maxFiles <= 0 || summaryPromises.length < options.maxFiles) {
       summaryPromises.push(
@@ -654,7 +654,7 @@ ${commentChain}
       }
     }
 
-    const reviewPromises = []
+    const reviewPromises: Promise<void>[] = []
     for (const [filename, fileContent, , patches] of filesAndChangesReview) {
       if (options.maxFiles <= 0 || reviewPromises.length < options.maxFiles) {
         reviewPromises.push(
