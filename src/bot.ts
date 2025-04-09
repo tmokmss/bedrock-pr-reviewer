@@ -1,5 +1,6 @@
 import {
   BedrockRuntimeClient,
+  ConversationRole,
   ConverseCommand,
   ConverseCommandInput,
   ConverseCommandOutput,
@@ -75,7 +76,7 @@ export class Bot {
         modelId: this.bedrockOptions.model,
         messages: [
           {
-            role: 'user',
+            role: 'user' as ConversationRole,
             content: [
               {
                 text: message
@@ -85,7 +86,7 @@ export class Bot {
           ...(prefix
             ? [
                 {
-                  role: 'assistant',
+                  role: 'assistant' as ConversationRole,
                   content: [
                     {
                       text: prefix
