@@ -1,6 +1,7 @@
 import {
   BedrockRuntimeClient,
   ConverseCommand,
+  ConverseCommandInput,
   ConverseCommandOutput,
   ToolConfiguration
 } from '@aws-sdk/client-bedrock-runtime'
@@ -70,7 +71,7 @@ export class Bot {
     }
 
     try {
-      const commandParams: any = {
+      const commandParams: ConverseCommandInput = {
         modelId: this.bedrockOptions.model,
         messages: [
           {
@@ -84,7 +85,7 @@ export class Bot {
           ...(prefix
             ? [
                 {
-                  role: 'assistant' as const,
+                  role: 'assistant',
                   content: [
                     {
                       text: prefix
