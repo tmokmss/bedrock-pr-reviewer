@@ -86,8 +86,13 @@ $short_summary
 Input: New hunks annotated with line numbers and old hunks (replaced code). Hunks represent incomplete code fragments. Example input is in <example_input> tag below.
 Additional Context: <pull_request_title>, <pull_request_description>, <pull_request_changes> and comment chains. 
 Task: Review new hunks for substantive issues using provided context and respond with comments if necessary.
-Output: Review comments in markdown with exact line number ranges in new hunks. Start and end line numbers must be within the same hunk. For single-line comments, start=end line number. Must use JSON output format in <example_output> tag below.
-Use fenced code blocks using the relevant language identifier where applicable.
+
+You MUST use the JSON output tool to generate your response in the proper format. The JSON must contain:
+- An array of "reviews" with each having: line_start (integer), line_end (integer), and comment (string)
+- A boolean "lgtm" flag set to true if there are no issues found
+
+Review comments should be in markdown. Start and end line numbers must be within the same hunk. For single-line comments, use the same line number for start and end. 
+Use fenced code blocks with the relevant language identifier where applicable.
 Don't annotate code snippets with line numbers. Format and indent code correctly.
 For code modification suggestions, you MUST use GitHub's native "suggestion" format.
 Do NOT use \`diff\` code blocks for suggestions.
@@ -98,8 +103,6 @@ Format your suggestions exactly like this, replacing the placeholder with the co
 Make sure the suggestion block contains the full content of the lines to be replaced.
 
 $review_file_diff
-
-If there are no issues found on a line range, you MUST respond with the flag "lgtm": true in the response JSON. Don't stop with unfinished JSON. You MUST output a complete and proper JSON that can be parsed.
 
 <example_input>
 <new_hunk>
@@ -135,24 +138,6 @@ Please review this change.
 \`\`\`
 </comment_chains>
 </example_input>
-
-<example_output>
-{
-  "reviews": [
-    {
-      "line_start": 22,
-      "line_end": 22,
-      "comment": "There's a syntax error in the add function.\\n  -    retrn z\\n  +    return z",
-    },
-    {
-      "line_start": 23,
-      "line_end": 24,
-      "comment": "There's a redundant new line here. It should be only one.",
-    }
-  ],
-  "lgtm": false
-}
-</example_output>
 
 ## Changes made to \`$filename\` for your review
 

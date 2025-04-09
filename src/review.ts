@@ -603,9 +603,33 @@ ${commentChain}
       if (patchesPacked > 0) {
         // perform review
         try {
+          const reviewJsonSchema = {
+            name: 'generate_review_json',
+            description: 'Generate review comments in JSON format',
+            parameters: {
+              type: 'object',
+              properties: {
+                reviews: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      line_start: {type: 'integer'},
+                      line_end: {type: 'integer'},
+                      comment: {type: 'string'}
+                    },
+                    required: ['line_start', 'line_end', 'comment']
+                  }
+                },
+                lgtm: {type: 'boolean'}
+              },
+              required: ['reviews', 'lgtm']
+            }
+          }
+
           const [response] = await heavyBot.chat(
             prompts.renderReviewFileDiff(ins),
-            '{'
+            reviewJsonSchema
           )
           if (response === '') {
             info('review: nothing obtained from bedrock')
@@ -860,7 +884,21 @@ function parseReview(
   const reviews: Review[] = []
 
   try {
-    const rawReviews = JSON.parse(response).reviews
+    let parsedResponse
+    // Check if the response is already a JSON string from tool use
+    try {
+      parsedResponse = JSON.parse(response)
+    } catch (parseErr) {
+      // If it fails, try to extract JSON from the text response
+      const jsonMatch = response.match(/\{[\s\S]*\}/)
+      if (jsonMatch) {
+        parsedResponse = JSON.parse(jsonMatch[0])
+      } else {
+        throw new Error('Could not extract JSON from response')
+      }
+    }
+
+    const rawReviews = parsedResponse.reviews || []
     for (const r of rawReviews) {
       if (r.comment) {
         reviews.push({
@@ -871,7 +909,8 @@ function parseReview(
       }
     }
   } catch (e: any) {
-    error(e.message)
+    error(`Failed to parse review response: ${e.message}`)
+    error(`Response was: ${response}`)
     return []
   }
 
