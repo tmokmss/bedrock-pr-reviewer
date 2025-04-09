@@ -12,7 +12,7 @@
     "outDir": "./lib",
     "rootDir": "./src",
     "strict": true,
-    "noImplicitAny": false,
+    "noImplicitAny": true,
     "esModuleInterop": true
   },
   "exclude": ["dist", "lib", "node_modules", "**/*.test.ts"]
