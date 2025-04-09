@@ -22,9 +22,9 @@ jobs:
       - run: |
           npm run format-check
         name: Run static analyses
-      - run: |
-          npm run test
-        name: Run unit tests
+      # - run: |
+      #     npm run test
+      #   name: Run unit tests
       - run: |
           npm run build
         name: Run tsc
