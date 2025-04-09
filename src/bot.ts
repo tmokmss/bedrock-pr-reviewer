@@ -36,12 +36,11 @@ export class Bot {
 
   chat = async (
     message: string,
-    prefix?: string,
     jsonSchema?: JsonSchema
   ): Promise<[string, Ids]> => {
     let res: [string, Ids] = ['', {}]
     try {
-      res = await this.chat_(message, prefix, jsonSchema)
+      res = await this.chat_(message, jsonSchema)
       return res
     } catch (e: unknown) {
       warning(`Failed to chat: ${e}`)
@@ -51,7 +50,6 @@ export class Bot {
 
   private readonly chat_ = async (
     message: string,
-    prefix: string = '',
     jsonSchema?: JsonSchema
   ): Promise<[string, Ids]> => {
     // record timing
@@ -82,19 +80,7 @@ export class Bot {
                 text: message
               }
             ]
-          },
-          ...(prefix
-            ? [
-                {
-                  role: 'assistant' as ConversationRole,
-                  content: [
-                    {
-                      text: prefix
-                    }
-                  ]
-                }
-              ]
-            : [])
+          }
         ],
         inferenceConfig: {
           maxTokens: 4096,
@@ -161,6 +147,6 @@ export class Bot {
       parentMessageId: response?.$metadata.requestId,
       conversationId: response?.$metadata.cfId
     }
-    return [prefix + responseText, newIds]
+    return [responseText, newIds]
   }
 }

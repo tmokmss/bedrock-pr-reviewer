@@ -629,7 +629,6 @@ ${commentChain}
 
           const [response] = await heavyBot.chat(
             prompts.renderReviewFileDiff(ins),
-            '{',
             reviewJsonSchema
           )
           if (response === '') {
