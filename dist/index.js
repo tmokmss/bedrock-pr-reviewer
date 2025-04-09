@@ -962,7 +962,7 @@ __nccwpck_require__.r(__webpack_exports__);
 /* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(2186);
 /* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _bot__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(4640);
-/* harmony import */ var _options__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(8870);
+/* harmony import */ var _options__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(7395);
 /* harmony import */ var _prompts__WEBPACK_IMPORTED_MODULE_6__ = __nccwpck_require__(4272);
 /* harmony import */ var _review__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(2612);
 /* harmony import */ var _review_comment__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(5947);
@@ -1090,7 +1090,7 @@ Retry count: ${retryCount}
 
 /***/ }),
 
-/***/ 8870:
+/***/ 7395:
 /***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
 
 "use strict";
@@ -1107,7 +1107,7 @@ __nccwpck_require__.d(__webpack_exports__, {
 var core = __nccwpck_require__(2186);
 // EXTERNAL MODULE: ./node_modules/brace-expansion/index.js
 var brace_expansion = __nccwpck_require__(3717);
-;// CONCATENATED MODULE: ./node_modules/minimatch/dist/mjs/assert-valid-pattern.js
+;// CONCATENATED MODULE: ./node_modules/minimatch/dist/esm/assert-valid-pattern.js
 const MAX_PATTERN_LENGTH = 1024 * 64;
 const assertValidPattern = (pattern) => {
     if (typeof pattern !== 'string') {
@@ -1118,7 +1118,7 @@ const assertValidPattern = (pattern) => {
     }
 };
 //# sourceMappingURL=assert-valid-pattern.js.map
-;// CONCATENATED MODULE: ./node_modules/minimatch/dist/mjs/brace-expressions.js
+;// CONCATENATED MODULE: ./node_modules/minimatch/dist/esm/brace-expressions.js
 // translate the various posix character classes into unicode properties
 // this works across all unicode locales
 // { <posix class>: [<translation>, /u flag required, negated]
@@ -1267,7 +1267,7 @@ const parseClass = (glob, position) => {
     return [comb, uflag, endPos - pos, true];
 };
 //# sourceMappingURL=brace-expressions.js.map
-;// CONCATENATED MODULE: ./node_modules/minimatch/dist/mjs/unescape.js
+;// CONCATENATED MODULE: ./node_modules/minimatch/dist/esm/unescape.js
 /**
  * Un-escape a string that has been escaped with {@link escape}.
  *
@@ -1288,7 +1288,7 @@ const unescape_unescape = (s, { windowsPathsNoEscape = false, } = {}) => {
         : s.replace(/((?!\\).|^)\[([^\/\\])\]/g, '$1$2').replace(/\\([^\/])/g, '$1');
 };
 //# sourceMappingURL=unescape.js.map
-;// CONCATENATED MODULE: ./node_modules/minimatch/dist/mjs/ast.js
+;// CONCATENATED MODULE: ./node_modules/minimatch/dist/esm/ast.js
 // parse a single path portion
 
 
@@ -1298,7 +1298,7 @@ const isExtglobType = (c) => types.has(c);
 // entire string, or just a single path portion, to prevent dots
 // and/or traversal patterns, when needed.
 // Exts don't need the ^ or / bit, because the root binds that already.
-const startNoTraversal = '(?!\\.\\.?(?:$|/))';
+const startNoTraversal = '(?!(?:^|/)\\.\\.?(?:$|/))';
 const startNoDot = '(?!\\.)';
 // characters that indicate a start of pattern needs the "no dots" bit,
 // because a dot *might* be matched. ( is not in the list, because in
@@ -1626,6 +1626,9 @@ class AST {
             _glob: glob,
         });
     }
+    get options() {
+        return this.#options;
+    }
     // returns the string match, the regexp source, whether there's magic
     // in the regexp (so a regular expression is required) and whether or
     // not the uflag is needed for the regular expression (for posix classes)
@@ -1695,7 +1698,8 @@ class AST {
     // - Since the start for a join is eg /(?!\.) and the start for a part
     // is ^(?!\.), we can just prepend (?!\.) to the pattern (either root
     // or start or whatever) and prepend ^ or / at the Regexp construction.
-    toRegExpSource() {
+    toRegExpSource(allowDot) {
+        const dot = allowDot ?? !!this.#options.dot;
         if (this.#root === this)
             this.#fillNegs();
         if (!this.type) {
@@ -1704,7 +1708,7 @@ class AST {
                 .map(p => {
                 const [re, _, hasMagic, uflag] = typeof p === 'string'
                     ? AST.#parseGlob(p, this.#hasMagic, noEmpty)
-                    : p.toRegExpSource();
+                    : p.toRegExpSource(allowDot);
                 this.#hasMagic = this.#hasMagic || hasMagic;
                 this.#uflag = this.#uflag || uflag;
                 return re;
@@ -1724,14 +1728,14 @@ class AST {
                         // and prevent that.
                         const needNoTrav = 
                         // dots are allowed, and the pattern starts with [ or .
-                        (this.#options.dot && aps.has(src.charAt(0))) ||
+                        (dot && aps.has(src.charAt(0))) ||
                             // the pattern starts with \., and then [ or .
                             (src.startsWith('\\.') && aps.has(src.charAt(2))) ||
                             // the pattern starts with \.\., and then [ or .
                             (src.startsWith('\\.\\.') && aps.has(src.charAt(4)));
                         // no need to prevent dots if it can't match a dot, or if a
                         // sub-pattern will be preventing it anyway.
-                        const needNoDot = !this.#options.dot && aps.has(src.charAt(0));
+                        const needNoDot = !dot && !allowDot && aps.has(src.charAt(0));
                         start = needNoTrav ? startNoTraversal : needNoDot ? startNoDot : '';
                     }
                 }
@@ -1751,23 +1755,13 @@ class AST {
                 this.#uflag,
             ];
         }
+        // We need to calculate the body *twice* if it's a repeat pattern
+        // at the start, once in nodot mode, then again in dot mode, so a
+        // pattern like *(?) can match 'x.y'
+        const repeated = this.type === '*' || this.type === '+';
         // some kind of extglob
         const start = this.type === '!' ? '(?:(?!(?:' : '(?:';
-        const body = this.#parts
-            .map(p => {
-            // extglob ASTs should only contain parent ASTs
-            /* c8 ignore start */
-            if (typeof p === 'string') {
-                throw new Error('string type in extglob ast??');
-            }
-            /* c8 ignore stop */
-            // can ignore hasMagic, because extglobs are already always magic
-            const [re, _, _hasMagic, uflag] = p.toRegExpSource();
-            this.#uflag = this.#uflag || uflag;
-            return re;
-        })
-            .filter(p => !(this.isStart() && this.isEnd()) || !!p)
-            .join('|');
+        let body = this.#partsToRegExp(dot);
         if (this.isStart() && this.isEnd() && !body && this.type !== '!') {
             // invalid extglob, has to at least be *something* present, if it's
             // the entire path portion.
@@ -1777,22 +1771,37 @@ class AST {
             this.#hasMagic = undefined;
             return [s, unescape_unescape(this.toString()), false, false];
         }
+        // XXX abstract out this map method
+        let bodyDotAllowed = !repeated || allowDot || dot || !startNoDot
+            ? ''
+            : this.#partsToRegExp(true);
+        if (bodyDotAllowed === body) {
+            bodyDotAllowed = '';
+        }
+        if (bodyDotAllowed) {
+            body = `(?:${body})(?:${bodyDotAllowed})*?`;
+        }
         // an empty !() is exactly equivalent to a starNoEmpty
         let final = '';
         if (this.type === '!' && this.#emptyExt) {
-            final =
-                (this.isStart() && !this.#options.dot ? startNoDot : '') + starNoEmpty;
+            final = (this.isStart() && !dot ? startNoDot : '') + starNoEmpty;
         }
         else {
             const close = this.type === '!'
                 ? // !() must match something,but !(x) can match ''
                     '))' +
-                        (this.isStart() && !this.#options.dot ? startNoDot : '') +
+                        (this.isStart() && !dot && !allowDot ? startNoDot : '') +
                         star +
                         ')'
                 : this.type === '@'
                     ? ')'
-                    : `)${this.type}`;
+                    : this.type === '?'
+                        ? ')?'
+                        : this.type === '+' && bodyDotAllowed
+                            ? ')'
+                            : this.type === '*' && bodyDotAllowed
+                                ? `)?`
+                                : `)${this.type}`;
             final = start + body + close;
         }
         return [
@@ -1801,6 +1810,23 @@ class AST {
             (this.#hasMagic = !!this.#hasMagic),
             this.#uflag,
         ];
+    }
+    #partsToRegExp(dot) {
+        return this.#parts
+            .map(p => {
+            // extglob ASTs should only contain parent ASTs
+            /* c8 ignore start */
+            if (typeof p === 'string') {
+                throw new Error('string type in extglob ast??');
+            }
+            /* c8 ignore stop */
+            // can ignore hasMagic, because extglobs are already always magic
+            const [re, _, _hasMagic, uflag] = p.toRegExpSource(dot);
+            this.#uflag = this.#uflag || uflag;
+            return re;
+        })
+            .filter(p => !(this.isStart() && this.isEnd()) || !!p)
+            .join('|');
     }
     static #parseGlob(glob, hasMagic, noEmpty = false) {
         let escaping = false;
@@ -1851,7 +1877,7 @@ class AST {
     }
 }
 //# sourceMappingURL=ast.js.map
-;// CONCATENATED MODULE: ./node_modules/minimatch/dist/mjs/escape.js
+;// CONCATENATED MODULE: ./node_modules/minimatch/dist/esm/escape.js
 /**
  * Escape all magic characters in a glob pattern.
  *
@@ -1870,7 +1896,7 @@ const escape_escape = (s, { windowsPathsNoEscape = false, } = {}) => {
         : s.replace(/[?*()[\]\\]/g, '\\$&');
 };
 //# sourceMappingURL=escape.js.map
-;// CONCATENATED MODULE: ./node_modules/minimatch/dist/mjs/index.js
+;// CONCATENATED MODULE: ./node_modules/minimatch/dist/esm/index.js
 
 
 
@@ -1953,9 +1979,9 @@ const GLOBSTAR = Symbol('globstar **');
 minimatch.GLOBSTAR = GLOBSTAR;
 // any single thing other than /
 // don't need to escape / when using new RegExp()
-const mjs_qmark = '[^/]';
+const esm_qmark = '[^/]';
 // * => any number of characters
-const mjs_star = mjs_qmark + '*?';
+const esm_star = esm_qmark + '*?';
 // ** when dots are allowed.  Anything goes, except .. and .
 // not (^ or / followed by one or two dots followed by $ or /),
 // followed by anything, any number of times.
@@ -2048,7 +2074,7 @@ const match = (list, pattern, options = {}) => {
 minimatch.match = match;
 // replace stuff like \* with *
 const globMagic = /[?*]|[+@!]\(.*?\)|\[|\]/;
-const mjs_regExpEscape = (s) => s.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+const esm_regExpEscape = (s) => s.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
 class Minimatch {
     options;
     set;
@@ -2205,6 +2231,7 @@ class Minimatch {
             globParts = this.levelOneOptimize(globParts);
         }
         else {
+            // just collapse multiple ** portions into one
             globParts = this.adjascentGlobstarOptimize(globParts);
         }
         return globParts;
@@ -2391,10 +2418,11 @@ class Minimatch {
         for (let i = 0; i < globParts.length - 1; i++) {
             for (let j = i + 1; j < globParts.length; j++) {
                 const matched = this.partsMatch(globParts[i], globParts[j], !this.preserveMultipleSlashes);
-                if (!matched)
-                    continue;
-                globParts[i] = matched;
-                globParts[j] = [];
+                if (matched) {
+                    globParts[i] = [];
+                    globParts[j] = matched;
+                    break;
+                }
             }
         }
         return globParts.filter(gs => gs.length);
@@ -2694,7 +2722,11 @@ class Minimatch {
             fastTest = dotStarTest;
         }
         const re = AST.fromGlob(pattern, this.options).toMMPattern();
-        return fastTest ? Object.assign(re, { test: fastTest }) : re;
+        if (fastTest && typeof re === 'object') {
+            // Avoids overriding in frozen environments
+            Reflect.defineProperty(re, 'test', { value: fastTest });
+        }
+        return re;
     }
     makeRe() {
         if (this.regexp || this.regexp === false)
@@ -2712,7 +2744,7 @@ class Minimatch {
         }
         const options = this.options;
         const twoStar = options.noglobstar
-            ? mjs_star
+            ? esm_star
             : options.dot
                 ? twoStarDot
                 : twoStarNoDot;
@@ -2731,7 +2763,7 @@ class Minimatch {
                         flags.add(f);
                 }
                 return typeof p === 'string'
-                    ? mjs_regExpEscape(p)
+                    ? esm_regExpEscape(p)
                     : p === GLOBSTAR
                         ? GLOBSTAR
                         : p._src;
@@ -3157,13 +3189,8 @@ Task: Review new hunks for substantive issues using provided context and respond
 Output: Review comments in markdown with exact line number ranges in new hunks. Start and end line numbers must be within the same hunk. For single-line comments, start=end line number. Must use JSON output format in <example_output> tag below.
 Use fenced code blocks using the relevant language identifier where applicable.
 Don't annotate code snippets with line numbers. Format and indent code correctly.
-For code modification suggestions, you MUST use GitHub's native "suggestion" format.
-Do NOT use \`diff\` code blocks for suggestions.
-Format your suggestions exactly like this, replacing the placeholder with the complete code snippet for the suggested lines:
-\`\`\`suggestion
-[The new code that should replace the original lines]
-\`\`\`
-Make sure the suggestion block contains the full content of the lines to be replaced.
+Do not use \`suggestion\` code blocks.
+For fixes, use \`diff\` code blocks, marking changes with \`+\` or \`-\`. The line number range for comments with fix snippets must exactly match the range to replace in the new hunk.
 
 $review_file_diff
 
