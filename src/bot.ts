@@ -1,5 +1,3 @@
-import './fetch-polyfill'
-
 import {
   BedrockRuntimeClient,
   ConverseCommand,
