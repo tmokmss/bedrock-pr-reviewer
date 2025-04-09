@@ -287,10 +287,10 @@ ${statusMsg}
     await this.deletePendingReview(pullNumber)
 
     const generateCommentData = (comment: {
-      path: string;
-      message: string;
-      startLine: number;
-      endLine: number;
+      path: string
+      message: string
+      startLine: number
+      endLine: number
     }) => {
       const commentData: any = {
         path: comment.path,

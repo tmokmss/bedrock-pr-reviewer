@@ -1,0 +1,23 @@
+name: Build Package
+
+on:
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+      - run: |
+          npm ci
+          npm run build
+          npm run package
+      - name: Add & Commit
+        uses: EndBug/add-and-commit@v7.2.0
+        with:
+          add: "dist/."
+          message: "build package"
