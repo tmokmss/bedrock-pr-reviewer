@@ -57,6 +57,7 @@ export const codeReview = async (
     )
   }
 
+  console.log(inputs.description);
   // if the description contains ignore_keyword, skip
   if (inputs.description.includes(ignoreKeyword)) {
     info('Skipped: description contains ignore_keyword')
