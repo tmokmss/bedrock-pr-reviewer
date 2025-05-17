@@ -31,7 +31,8 @@ async function run(): Promise<void> {
     getInput('bedrock_timeout_ms'),
     getInput('bedrock_concurrency_limit'),
     getInput('github_concurrency_limit'),
-    getInput('language')
+    getInput('language'),
+    getInput('ignore_keyword')
   )
 
   // print options

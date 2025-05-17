@@ -223,6 +223,10 @@ inputs:
     required: false
     description: ISO code for the response language
     default: en-US
+  ignore_keyword:
+    required: false
+    description: 'Keyword to ignore PR review (when found in PR description)'
+    default: '/reviewbot: ignore'
   bot_icon:
     required: false
     description: 'The icon for the bot'
