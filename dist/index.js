@@ -3233,12 +3233,13 @@ class Options {
         this.language = language;
         this.ignoreKeyword = ignoreKeyword;
         // Support both comma-separated and newline-separated lists
-        this.extraFiles = typeof extraFiles === 'string'
-            ? extraFiles
-                .split(/\r?\n|,/)
-                .map(f => f.trim())
-                .filter(Boolean)
-            : extraFiles;
+        this.extraFiles =
+            typeof extraFiles === 'string'
+                ? extraFiles
+                    .split(/\r?\n|,/)
+                    .map(f => f.trim())
+                    .filter(Boolean)
+                : extraFiles;
     }
     // print all options using core.info
     print() {

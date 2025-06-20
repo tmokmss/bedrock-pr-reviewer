@@ -5,12 +5,12 @@ import {
   setFailed,
   warning
 } from '@actions/core'
-import { Bot } from './bot'
-import { BedrockOptions, Options } from './options'
-import { Prompts } from './prompts'
-import { codeReview } from './review'
-import { handleReviewComment } from './review-comment'
-import { isCollaborator } from './permission'
+import {Bot} from './bot'
+import {BedrockOptions, Options} from './options'
+import {Prompts} from './prompts'
+import {codeReview} from './review'
+import {handleReviewComment} from './review-comment'
+import {isCollaborator} from './permission'
 
 async function run(): Promise<void> {
   const options: Options = new Options(
