@@ -134,6 +134,49 @@ system_message: |
 
 </details>
 
+### Including repository-specific review rules
+
+You can include repository-specific code style or review rules in your prompts by specifying the `extra_files` input. This allows you to keep Markdown/text files (such as `.github/CODE_REVIEW_RULES.md` or `.github/STYLE_GUIDE.md`) in your repository and have their contents included in the review prompt.
+
+**How to use:**
+
+Add the `extra_files` input to your workflow configuration, listing the files you want to include (comma-separated or multiline):
+
+```yaml
+with:
+  extra_files: |
+    .github/CODE_REVIEW_RULES.md
+    .github/STYLE_GUIDE.md
+```
+
+or
+
+```yaml
+with:
+  extra_files: .github/CODE_REVIEW_RULES.md,.github/STYLE_GUIDE.md
+```
+
+The contents of each file will be appended to the system prompt in the following format, in the order listed:
+
+```
+<system_message>
+
+Follow these rules from .github/CODE_REVIEW_RULES.md:
+---
+<file contents>
+---
+
+Follow these rules from .github/STYLE_GUIDE.md:
+---
+<file contents>
+---
+```
+
+- If a file is missing or too large, a warning will be logged to stderr and the action will continue, but nothing will be included in the prompt for that file.
+- Large files will be truncated to a safe size.
+
+See also the `extra_files` input in [`action.yml`](./action.yml).
+
 ## Conversation with AI reviewer
 
 You can reply to a review comment made by this action and get a response based

@@ -5,12 +5,12 @@ import {
   setFailed,
   warning
 } from '@actions/core'
-import {Bot} from './bot'
-import {BedrockOptions, Options} from './options'
-import {Prompts} from './prompts'
-import {codeReview} from './review'
-import {handleReviewComment} from './review-comment'
-import {isCollaborator} from './permission'
+import { Bot } from './bot'
+import { BedrockOptions, Options } from './options'
+import { Prompts } from './prompts'
+import { codeReview } from './review'
+import { handleReviewComment } from './review-comment'
+import { isCollaborator } from './permission'
 
 async function run(): Promise<void> {
   const options: Options = new Options(
@@ -32,7 +32,8 @@ async function run(): Promise<void> {
     getInput('bedrock_concurrency_limit'),
     getInput('github_concurrency_limit'),
     getInput('language'),
-    getInput('ignore_keyword')
+    getInput('ignore_keyword'),
+    getInput('extra_files')
   )
 
   // print options

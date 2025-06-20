@@ -1,8 +1,8 @@
-import {error, info, warning} from '@actions/core'
+import { error, info, warning } from '@actions/core'
 // eslint-disable-next-line camelcase
-import {context as github_context} from '@actions/github'
+import { context as github_context } from '@actions/github'
 import pLimit from 'p-limit'
-import {type Bot} from './bot'
+import { type Bot } from './bot'
 import {
   Commenter,
   COMMENT_REPLY_TAG,
@@ -12,11 +12,12 @@ import {
   SHORT_SUMMARY_START_TAG,
   SUMMARIZE_TAG
 } from './commenter'
-import {Inputs} from './inputs'
-import {octokit} from './octokit'
-import {type Options} from './options'
-import {type Prompts} from './prompts'
-import {getTokenCount} from './tokenizer'
+import { Inputs } from './inputs'
+import { octokit } from './octokit'
+import { type Options } from './options'
+import { type Prompts } from './prompts'
+import { getTokenCount } from './tokenizer'
+import { readExtraFiles } from './extra-files'
 
 // eslint-disable-next-line camelcase
 const context = github_context
@@ -64,6 +65,18 @@ export const codeReview = async (
   inputs.systemMessage = options.systemMessage
   inputs.reviewFileDiff = options.reviewFileDiff
 
+  // If extraFiles are provided, read and prepend their contents to the systemMessage
+  if (options.extraFiles && options.extraFiles.length > 0) {
+    try {
+      const extraPrompt = await readExtraFiles(options.extraFiles)
+      if (extraPrompt) {
+        inputs.systemMessage = `${inputs.systemMessage}\n${extraPrompt}`
+      }
+    } catch (e) {
+      warning(`Failed to read extra_files: ${(e as Error).message}`)
+    }
+  }
+
   // get SUMMARIZE_TAG message
   const existingSummarizeCmt = await commenter.findCommentWithTag(
     SUMMARIZE_TAG,
@@ -95,8 +108,7 @@ export const codeReview = async (
     highestReviewedCommitId === context.payload.pull_request.head.sha
   ) {
     info(
-      `Will review from the base commit: ${
-        context.payload.pull_request.base.sha as string
+      `Will review from the base commit: ${context.payload.pull_request.base.sha as string
       }`
     )
     highestReviewedCommitId = context.payload.pull_request.base.sha
@@ -198,8 +210,7 @@ export const codeReview = async (
           }
         } catch (e: any) {
           warning(
-            `Failed to get file contents: ${
-              e as string
+            `Failed to get file contents: ${e as string
             }. This is OK if it's a new file.`
           )
         }
@@ -264,13 +275,11 @@ ${hunks.oldHunk}
 
   let statusMsg = `<details>
 <summary>Commits</summary>
-Files that changed from the base of the PR and between ${highestReviewedCommitId} and ${
-    context.payload.pull_request.head.sha
-  } commits.
+Files that changed from the base of the PR and between ${highestReviewedCommitId} and ${context.payload.pull_request.head.sha
+    } commits.
 </details>
-${
-  filesAndChanges.length > 0
-    ? `
+${filesAndChanges.length > 0
+      ? `
 <details>
 <summary>Files selected (${filesAndChanges.length})</summary>
 
@@ -279,11 +288,10 @@ ${
         .join('\n* ')}
 </details>
 `
-    : ''
-}
-${
-  filterIgnoredFiles.length > 0
-    ? `
+      : ''
+    }
+${filterIgnoredFiles.length > 0
+      ? `
 <details>
 <summary>Files ignored due to filter (${filterIgnoredFiles.length})</summary>
 
@@ -291,8 +299,8 @@ ${
 
 </details>
 `
-    : ''
-}
+      : ''
+    }
 `
 
   // update the existing comment with in progress status
@@ -456,34 +464,30 @@ ${SHORT_SUMMARY_END_TAG}
 `
 
   statusMsg += `
-${
-  skippedFiles.length > 0
-    ? `
+${skippedFiles.length > 0
+      ? `
 <details>
-<summary>Files not processed due to max files limit (${
-        skippedFiles.length
+<summary>Files not processed due to max files limit (${skippedFiles.length
       })</summary>
 
 * ${skippedFiles.join('\n* ')}
 
 </details>
 `
-    : ''
-}
-${
-  summariesFailed.length > 0
-    ? `
+      : ''
+    }
+${summariesFailed.length > 0
+      ? `
 <details>
-<summary>Files not summarized due to errors (${
-        summariesFailed.length
+<summary>Files not summarized due to errors (${summariesFailed.length
       })</summary>
 
 * ${summariesFailed.join('\n* ')}
 
 </details>
 `
-    : ''
-}
+      : ''
+    }
 `
 
   if (!options.disableReview) {
@@ -568,8 +572,7 @@ ${
           }
         } catch (e: any) {
           warning(
-            `Failed to get comments: ${e as string}, skipping. backtrace: ${
-              e.stack as string
+            `Failed to get comments: ${e as string}, skipping. backtrace: ${e.stack as string
             }`
           )
         }
@@ -612,14 +615,14 @@ ${commentChain}
                   items: {
                     type: 'object',
                     properties: {
-                      line_start: {type: 'integer'},
-                      line_end: {type: 'integer'},
-                      comment: {type: 'string'}
+                      line_start: { type: 'integer' },
+                      line_end: { type: 'integer' },
+                      comment: { type: 'string' }
                     },
                     required: ['line_start', 'line_end', 'comment']
                   }
                 },
-                lgtm: {type: 'boolean'}
+                lgtm: { type: 'boolean' }
               },
               required: ['reviews', 'lgtm']
             }
@@ -665,8 +668,7 @@ ${commentChain}
           }
         } catch (e: any) {
           warning(
-            `Failed to review: ${e as string}, skipping. backtrace: ${
-              e.stack as string
+            `Failed to review: ${e as string}, skipping. backtrace: ${e.stack as string
             }`
           )
           reviewsFailed.push(`${filename} (${e as string})`)
@@ -692,30 +694,27 @@ ${commentChain}
     await Promise.all(reviewPromises)
 
     statusMsg += `
-${
-  reviewsFailed.length > 0
-    ? `<details>
+${reviewsFailed.length > 0
+        ? `<details>
 <summary>Files not reviewed due to errors (${reviewsFailed.length})</summary>
 
 * ${reviewsFailed.join('\n* ')}
 
 </details>
 `
-    : ''
-}
-${
-  reviewsSkipped.length > 0
-    ? `<details>
-<summary>Files skipped from review due to trivial changes (${
-        reviewsSkipped.length
-      })</summary>
+        : ''
+      }
+${reviewsSkipped.length > 0
+        ? `<details>
+<summary>Files skipped from review due to trivial changes (${reviewsSkipped.length
+        })</summary>
 
 * ${reviewsSkipped.join('\n* ')}
 
 </details>
 `
-    : ''
-}
+        : ''
+      }
 <details>
 <summary>Review comments generated (${reviewCount + lgtmCount})</summary>
 
@@ -787,8 +786,8 @@ const splitPatch = (patch: string | null | undefined): string[] => {
 const patchStartEndLine = (
   patch: string
 ): {
-  oldHunk: {startLine: number; endLine: number}
-  newHunk: {startLine: number; endLine: number}
+  oldHunk: { startLine: number; endLine: number }
+  newHunk: { startLine: number; endLine: number }
 } | null => {
   const pattern = /(^@@ -(\d+),(\d+) \+(\d+),(\d+) @@)/gm
   const match = pattern.exec(patch)
@@ -814,7 +813,7 @@ const patchStartEndLine = (
 
 const parsePatch = (
   patch: string
-): {oldHunk: string; newHunk: string} | null => {
+): { oldHunk: string; newHunk: string } | null => {
   const hunkInfo = patchStartEndLine(patch)
   if (hunkInfo == null) {
     return null

@@ -231,6 +231,10 @@ inputs:
     required: false
     description: 'The icon for the bot'
     default: 🤖
+  extra_files:
+    required: false
+    description: 'Comma-separated list of Markdown/text files to include in the review prompt.'
+    default: ''
 runs:
   using: 'node20'
   main: 'dist/index.js'
