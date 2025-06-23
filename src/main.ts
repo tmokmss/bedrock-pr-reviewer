@@ -32,7 +32,8 @@ async function run(): Promise<void> {
     getInput('bedrock_concurrency_limit'),
     getInput('github_concurrency_limit'),
     getInput('language'),
-    getInput('ignore_keyword')
+    getInput('ignore_keyword'),
+    getInput('extra_files')
   )
 
   // print options

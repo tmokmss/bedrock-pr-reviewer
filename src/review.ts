@@ -17,6 +17,7 @@ import {octokit} from './octokit'
 import {type Options} from './options'
 import {type Prompts} from './prompts'
 import {getTokenCount} from './tokenizer'
+import {readExtraFiles} from './extra-files'
 
 // eslint-disable-next-line camelcase
 const context = github_context
@@ -63,6 +64,18 @@ export const codeReview = async (
 
   inputs.systemMessage = options.systemMessage
   inputs.reviewFileDiff = options.reviewFileDiff
+
+  // If extraFiles are provided, read and prepend their contents to the systemMessage
+  if (options.extraFiles && options.extraFiles.length > 0) {
+    try {
+      const extraPrompt = await readExtraFiles(options.extraFiles)
+      if (extraPrompt) {
+        inputs.systemMessage = `${inputs.systemMessage}\n${extraPrompt}`
+      }
+    } catch (e) {
+      warning(`Failed to read extra_files: ${(e as Error).message}`)
+    }
+  }
 
   // get SUMMARIZE_TAG message
   const existingSummarizeCmt = await commenter.findCommentWithTag(

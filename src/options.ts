@@ -24,6 +24,7 @@ export class Options {
   heavyTokenLimits: TokenLimits
   language: string
   ignoreKeyword: string
+  extraFiles: string[]
 
   constructor(
     debug: boolean,
@@ -44,7 +45,8 @@ export class Options {
     bedrockConcurrencyLimit = '6',
     githubConcurrencyLimit = '6',
     language = 'en-US',
-    ignoreKeyword = '/reviewbot: ignore'
+    ignoreKeyword = '/reviewbot: ignore',
+    extraFiles = ''
   ) {
     this.debug = debug
     this.disableReview = disableReview
@@ -67,6 +69,14 @@ export class Options {
     this.heavyTokenLimits = new TokenLimits(bedrockHeavyModel)
     this.language = language
     this.ignoreKeyword = ignoreKeyword
+    // Support both comma-separated and newline-separated lists
+    this.extraFiles =
+      typeof extraFiles === 'string'
+        ? extraFiles
+            .split(/\r?\n|,/)
+            .map(f => f.trim())
+            .filter(Boolean)
+        : extraFiles
   }
 
   // print all options using core.info
@@ -92,6 +102,7 @@ export class Options {
     info(`review_token_limits: ${this.heavyTokenLimits.string()}`)
     info(`language: ${this.language}`)
     info(`ignore_keyword: ${this.ignoreKeyword}`)
+    info(`extra_files: ${this.extraFiles}`)
   }
 
   checkPath(path: string): boolean {
