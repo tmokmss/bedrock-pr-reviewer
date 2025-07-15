@@ -3791,6 +3791,8 @@ const handleReviewComment = async (heavyBot, options, prompts) => {
 };
 const handleCommand = async (lightBot, heavyBot, options, prompts) => {
     const commenter = new _commenter__WEBPACK_IMPORTED_MODULE_2__/* .Commenter */ .Es();
+    (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.info)(`handleCommand called with event: ${context.eventName}`);
+    (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.info)(`Payload keys: ${Object.keys(context.payload || {})}`);
     if (context.eventName !== 'issue_comment') {
         (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.warning)(`Skipped: ${context.eventName} is not an issue_comment event`);
         return;
@@ -3801,6 +3803,8 @@ const handleCommand = async (lightBot, heavyBot, options, prompts) => {
     }
     const comment = context.payload.comment;
     const commentBody = comment.body;
+    (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.info)(`Comment body: ${commentBody}`);
+    (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.info)(`Comment user: ${comment.user?.login}`);
     // Check if this is a pull request comment
     if (!context.payload.issue || !context.payload.issue.pull_request) {
         (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.warning)('Skipped: comment is not on a pull request');
@@ -3809,6 +3813,11 @@ const handleCommand = async (lightBot, heavyBot, options, prompts) => {
     // Check if the comment contains /reviewbot command
     if (!commentBody.includes('/reviewbot')) {
         (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.info)('Skipped: comment does not contain /reviewbot command');
+        return;
+    }
+    // Check if the comment is from the bot itself (avoid infinite loops)
+    if (comment.user.login === 'github-actions[bot]') {
+        (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.info)('Skipped: comment is from the bot itself');
         return;
     }
     const command = parseCommand(commentBody);
