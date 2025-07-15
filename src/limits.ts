@@ -10,6 +10,9 @@ export class TokenLimits {
     } else if (model === 'anthropic.claude-v2') {
       this.maxTokens = 100_000
       this.responseTokens = 3000
+    } else if (model === 'anthropic.claude-v4-sonnet') {
+      this.maxTokens = 200_000
+      this.responseTokens = 64_000
     } else {
       // The latest models usually have this level of limits.
       this.maxTokens = 200_000

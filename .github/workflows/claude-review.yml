@@ -1,0 +1,67 @@
+name: 🔍 Claude Code Review (Automated)
+
+on:
+  pull_request:
+  push:
+  pull_request_review_comment:
+    types: [created]
+
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to review'
+        required: true
+        type: string
+
+env:
+  AWS_REGION: us-east-1
+
+concurrency:
+  group:
+    ${{ github.repository }}-${{ github.event.number || github.head_ref ||
+    github.sha }}-${{ github.workflow }}-${{ github.event_name ==
+    'pull_request_review_comment' && 'pr_comment' || 'pr' }}
+  cancel-in-progress: ${{ github.event_name != 'pull_request_review_comment' }}
+
+jobs:
+  code-review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # For manual dispatch, checkout the PR branch
+          ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/pull/{0}/head', github.event.inputs.pr_number) || github.ref }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install boto3 requests PyGithub
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::381491836522:role/claude-code-reviewer
+          role-session-name: github-actions-session-code-review
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: PR review
+        uses: infinohq/bedrock-pr-reviewer@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.INFINO_GITHUB_TOKEN }}
+        with:
+          debug: true
+          review_simple_changes: false
+          review_comment_lgtm: false
+          bedrock_light_model: arn:aws:bedrock:us-east-1:381491836522:inference-profile/us.anthropic.claude-3-5-haiku-20241022-v1:0
+          bedrock_heavy_model: arn:aws:bedrock:us-east-1:381491836522:inference-profile/us.anthropic.claude-3-5-haiku-20241022-v1:0
