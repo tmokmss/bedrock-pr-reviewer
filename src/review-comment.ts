@@ -33,17 +33,17 @@ function parseCommand(commentBody: string): Command {
       if (parts.length >= 2) {
         if (parts[1] === 'review') {
           if (parts.length >= 3 && parts[2] === 'all') {
-            return { type: 'review_all' }
+            return {type: 'review_all'}
           } else if (parts.length >= 3) {
-            return { type: 'review_files', files: parts.slice(2) }
+            return {type: 'review_files', files: parts.slice(2)}
           }
         } else if (parts[1] === 'summarize') {
-          return { type: 'summarize' }
+          return {type: 'summarize'}
         }
       }
     }
   }
-  return { type: 'unknown' }
+  return {type: 'unknown'}
 }
 
 export const handleReviewComment = async (
@@ -272,7 +272,13 @@ export const handleCommand = async (
         break
       case 'review_files':
         if (command.files && command.files.length > 0) {
-          await reviewSpecificFiles(command.files, lightBot, heavyBot, options, prompts)
+          await reviewSpecificFiles(
+            command.files,
+            lightBot,
+            heavyBot,
+            options,
+            prompts
+          )
         } else {
           await commenter.comment(
             'Please specify files to review. Example: `/reviewbot review file1.ts file2.ts`',

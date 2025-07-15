@@ -97,16 +97,16 @@ async function run(): Promise<void> {
       process.env.GITHUB_EVENT_NAME === 'pull_request_target'
     ) {
       await codeReview(lightBot, heavyBot, options, prompts)
-    } else if (
-      process.env.GITHUB_EVENT_NAME === 'issue_comment'
-    ) {
+    } else if (process.env.GITHUB_EVENT_NAME === 'issue_comment') {
       await handleCommand(lightBot, heavyBot, options, prompts)
     } else if (
       process.env.GITHUB_EVENT_NAME === 'pull_request_review_comment'
     ) {
       await handleReviewComment(heavyBot, options, prompts)
     } else {
-      warning('Skipped: this action only works on pull_request, issue_comment, or pull_request_review_comment events')
+      warning(
+        'Skipped: this action only works on pull_request, issue_comment, or pull_request_review_comment events'
+      )
     }
   } catch (e: any) {
     if (e instanceof Error) {

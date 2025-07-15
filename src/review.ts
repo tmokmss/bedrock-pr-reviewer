@@ -85,9 +85,7 @@ export const reviewSpecificFiles = async (
   }
 
   // Filter to only requested files
-  const requestedFiles = allFiles.filter(file => 
-    files.includes(file.filename)
-  )
+  const requestedFiles = allFiles.filter(file => files.includes(file.filename))
 
   if (requestedFiles.length === 0) {
     await commenter.comment(
@@ -99,7 +97,9 @@ export const reviewSpecificFiles = async (
   }
 
   // Apply path filters
-  const filteredFiles = requestedFiles.filter(file => options.checkPath(file.filename))
+  const filteredFiles = requestedFiles.filter(file =>
+    options.checkPath(file.filename)
+  )
 
   if (filteredFiles.length === 0) {
     await commenter.comment(
@@ -573,10 +573,10 @@ ${
       patches: Array<[number, number, string]>
     ): Promise<void> => {
       info(`reviewing ${filename}`)
-              // make a copy of inputs
-        const ins: Inputs = inputs.clone()
-        ins.filename = filename
-        ins.directoryInstructions = options.getDirectoryInstructions(filename)
+      // make a copy of inputs
+      const ins: Inputs = inputs.clone()
+      ins.filename = filename
+      ins.directoryInstructions = options.getDirectoryInstructions(filename)
 
       // calculate tokens based on inputs so far
       let tokens = getTokenCount(prompts.renderReviewFileDiff(ins))

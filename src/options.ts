@@ -104,114 +104,147 @@ export class Options {
 
   private initializeDirectoryInstructions(): Map<string, string> {
     const instructions = new Map<string, string>()
-    
+
     // Database operations - Performance critical
-    instructions.set('services/coredb/', `
+    instructions.set(
+      'services/coredb/',
+      `
 **Focus: Performance-critical database operations**
 - **Performance Optimization**: Every operation must be optimized for cost and efficiency
 - **Memory Management**: Check for memory leaks, proper cleanup, efficient data structures
 - **Concurrency**: Ensure thread-safe operations, proper async/await patterns
 - **Error Handling**: Robust error handling without performance penalties
 - **Benchmarking**: Suggest performance benchmarks for critical paths
-    `)
-    
+    `
+    )
+
     // Gateway/API - Reliability and security
-    instructions.set('services/gateway/', `
+    instructions.set(
+      'services/gateway/',
+      `
 **Focus: API reliability and security**
 - **Security**: Authentication, authorization, input validation, rate limiting
 - **API Design**: RESTful principles, proper HTTP status codes, consistent response formats
 - **Error Handling**: Comprehensive error responses, proper logging
 - **Performance**: Request/response optimization, connection pooling
 - **Monitoring**: Proper metrics, logging, and observability
-    `)
-    
+    `
+    )
+
     // AI/ML services - Code quality and maintainability
-    instructions.set('services/iai/', `
+    instructions.set(
+      'services/iai/',
+      `
 **Focus: AI/ML code quality and maintainability**
 - **Code Quality**: Clean, readable Python code following PEP 8
 - **Type Safety**: Proper type hints, mypy compliance
 - **Dependencies**: Minimal, well-maintained dependencies
 - **Testing**: Comprehensive unit tests, integration tests
 - **Error Handling**: Graceful handling of AI/ML failures
-    `)
-    
+    `
+    )
+
     // Frontend - User experience and performance
-    instructions.set('services/iosd/infino-react/', `
+    instructions.set(
+      'services/iosd/infino-react/',
+      `
 **Focus: Frontend user experience and performance**
 - **Performance**: Bundle size optimization, lazy loading, efficient rendering
 - **State Management**: Proper React patterns, minimal re-renders
 - **TypeScript**: Strict typing, proper interfaces
 - **Accessibility**: ARIA labels, keyboard navigation, screen reader support
 - **Mobile Responsiveness**: Cross-device compatibility
-    `)
-    
+    `
+    )
+
     // Connector services - Data integration reliability
-    instructions.set('services/connector/', `
+    instructions.set(
+      'services/connector/',
+      `
 **Focus: Data integration reliability and extensibility**
 - **Error Handling**: Robust error handling for external service failures
 - **Retry Logic**: Exponential backoff, circuit breakers
 - **Data Validation**: Input/output validation, schema compliance
 - **Security**: Secure credential handling, data encryption
 - **Performance**: Efficient data processing, streaming where possible
-    `)
-    
+    `
+    )
+
     // Instrumentation - Code analysis accuracy
-    instructions.set('services/instrumentation/', `
+    instructions.set(
+      'services/instrumentation/',
+      `
 **Focus: Code analysis and telemetry accuracy**
 - **Accuracy**: Precise code analysis, correct telemetry collection
 - **Performance**: Efficient parsing and analysis algorithms
 - **Extensibility**: Support for multiple languages and frameworks
 - **Privacy**: Proper handling of sensitive code data
 - **Testing**: Comprehensive test coverage for analysis accuracy
-    `)
-    
+    `
+    )
+
     // SDK - Usability and consistency
-    instructions.set('sdk/', `
+    instructions.set(
+      'sdk/',
+      `
 **Focus: SDK usability and consistency**
 - **API Consistency**: Consistent interfaces across languages
 - **Documentation**: Comprehensive API documentation, examples
 - **Error Handling**: Clear error messages, proper exception handling
 - **Performance**: Efficient client implementations
 - **Versioning**: Proper semantic versioning, backward compatibility
-    `)
-    
+    `
+    )
+
     // Infrastructure - Reliability and security
-    instructions.set('deploy/', `
+    instructions.set(
+      'deploy/',
+      `
 **Focus: Infrastructure reliability and security**
 - **Security**: Secure configurations, proper secrets management
 - **Scalability**: Auto-scaling configurations, resource optimization
 - **Monitoring**: Proper logging, metrics, alerting
 - **Documentation**: Clear deployment instructions
 - **Testing**: Infrastructure testing, validation scripts
-    `)
-    
-    instructions.set('terraform/', `
+    `
+    )
+
+    instructions.set(
+      'terraform/',
+      `
 **Focus: Infrastructure as Code best practices**
 - **Security**: Secure configurations, proper secrets management
 - **Resource Management**: Efficient resource allocation, cost optimization
 - **Modularity**: Reusable modules, proper organization
 - **State Management**: Proper state handling, backup strategies
 - **Documentation**: Clear variable descriptions, usage examples
-    `)
-    
+    `
+    )
+
     // Tests - Quality and coverage
-    instructions.set('tests/', `
+    instructions.set(
+      'tests/',
+      `
 **Focus: Test quality and coverage**
 - **Coverage**: Adequate test coverage for critical paths
 - **Quality**: Meaningful tests, proper assertions
 - **Performance**: Fast test execution, proper test isolation
 - **Maintainability**: Clear test structure, reusable test utilities
-    `)
-    
+    `
+    )
+
     // Utils - Reusability and efficiency
-    instructions.set('utils/', `
+    instructions.set(
+      'utils/',
+      `
 **Focus: Utility code reusability and efficiency**
 - **Reusability**: Generic, well-documented utilities
 - **Performance**: Efficient implementations
 - **Testing**: Comprehensive test coverage
 - **Documentation**: Clear usage examples and documentation
-    `)
-    
+    `
+    )
+
     return instructions
   }
 
@@ -219,15 +252,18 @@ export class Options {
     // Find the most specific matching directory
     let bestMatch = ''
     let bestInstruction = ''
-    
+
     for (const [dirPath, instruction] of this.directoryInstructions) {
       if (filePath.startsWith(dirPath) && dirPath.length > bestMatch.length) {
         bestMatch = dirPath
         bestInstruction = instruction
       }
     }
-    
-    return bestInstruction || 'Apply general code review principles focusing on bugs, security, performance, and maintainability.'
+
+    return (
+      bestInstruction ||
+      'Apply general code review principles focusing on bugs, security, performance, and maintainability.'
+    )
   }
 }
 

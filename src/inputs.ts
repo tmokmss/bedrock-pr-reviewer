@@ -109,7 +109,10 @@ export class Inputs {
       content = content.replace('$comment', this.comment)
     }
     if (this.directoryInstructions) {
-      content = content.replace('$directory_instructions', this.directoryInstructions)
+      content = content.replace(
+        '$directory_instructions',
+        this.directoryInstructions
+      )
     }
     return content
   }
