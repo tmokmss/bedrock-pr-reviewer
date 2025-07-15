@@ -7,6 +7,9 @@ on:
     types: [created]  # For /reviewbot commands
   pull_request_review_comment:
     types: [created]  # Keep existing comment replies
+  # Add this for testing - will trigger on any comment
+  pull_request_target:
+    types: [opened]
 
   workflow_dispatch:
     inputs:
@@ -31,9 +34,16 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      issues: write
       id-token: write
 
     steps:
+      - name: Debug event info
+        run: |
+          echo "Event name: ${{ github.event_name }}"
+          echo "Event action: ${{ github.event.action }}"
+          echo "Payload keys: ${{ toJSON(github.event) }}"
+          
       - name: Checkout code
         uses: actions/checkout@v4
         with:

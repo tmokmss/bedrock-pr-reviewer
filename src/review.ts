@@ -573,9 +573,10 @@ ${
       patches: Array<[number, number, string]>
     ): Promise<void> => {
       info(`reviewing ${filename}`)
-      // make a copy of inputs
-      const ins: Inputs = inputs.clone()
-      ins.filename = filename
+              // make a copy of inputs
+        const ins: Inputs = inputs.clone()
+        ins.filename = filename
+        ins.directoryInstructions = options.getDirectoryInstructions(filename)
 
       // calculate tokens based on inputs so far
       let tokens = getTokenCount(prompts.renderReviewFileDiff(ins))

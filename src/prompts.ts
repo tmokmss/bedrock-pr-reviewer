@@ -87,9 +87,29 @@ Input: New hunks annotated with line numbers and old hunks (replaced code). Hunk
 Additional Context: <pull_request_title>, <pull_request_description>, <pull_request_changes> and comment chains. 
 Task: Review new hunks for substantive issues using provided context and respond with comments if necessary.
 
+**CRITICAL: Only provide comments for SERIOUS issues. Do NOT provide:**
+- Positive feedback or praise
+- Minor style suggestions unless they impact readability significantly
+- General observations about good practices
+- Approval statements or congratulations
+- Comments about code being "good" or "well-written"
+
+**ONLY comment on:**
+- Bugs and potential runtime errors
+- Security vulnerabilities
+- Performance issues
+- Logic errors
+- Critical design flaws
+- Missing error handling for critical paths
+- Resource leaks or memory issues
+- Threading/concurrency issues
+- Breaking changes or API inconsistencies
+
+If the code is good with no serious issues, return empty reviews array with lgtm: true.
+
 You MUST use the JSON output tool to generate your response in the proper format. The JSON must contain:
 - An array of "reviews" with each having: line_start (integer), line_end (integer), and comment (string)
-- A boolean "lgtm" flag set to true if there are no issues found
+- A boolean "lgtm" flag set to true if there are no serious issues found
 
 Review comments should be in markdown. Start and end line numbers must be within the same hunk. For single-line comments, use the same line number for start and end. 
 Use fenced code blocks with the relevant language identifier where applicable.
@@ -103,6 +123,12 @@ Format your suggestions exactly like this, replacing the placeholder with the co
 Make sure the suggestion block contains the full content of the lines to be replaced.
 
 $review_file_diff
+
+## Directory-Specific Instructions
+
+Based on the file path \`$filename\`, apply these additional review criteria:
+
+$directory_instructions
 
 <example_input>
 <new_hunk>
