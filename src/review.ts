@@ -6,6 +6,7 @@ import {type Bot} from './bot'
 import {
   Commenter,
   COMMENT_REPLY_TAG,
+  COMMENT_TAG,
   RAW_SUMMARY_END_TAG,
   RAW_SUMMARY_START_TAG,
   SHORT_SUMMARY_END_TAG,
@@ -21,6 +22,108 @@ import {getTokenCount} from './tokenizer'
 // eslint-disable-next-line camelcase
 const context = github_context
 const repo = context.repo
+
+export const reviewSpecificFiles = async (
+  files: string[],
+  lightBot: Bot,
+  heavyBot: Bot,
+  options: Options,
+  prompts: Prompts
+): Promise<void> => {
+  // Similar to codeReview but filter to only specified files
+  const commenter: Commenter = new Commenter()
+
+  const bedrockConcurrencyLimit = pLimit(options.bedrockConcurrencyLimit)
+  const githubConcurrencyLimit = pLimit(options.githubConcurrencyLimit)
+
+  if (
+    context.eventName !== 'pull_request' &&
+    context.eventName !== 'pull_request_target' &&
+    context.eventName !== 'issue_comment'
+  ) {
+    warning(
+      `Skipped: current event is ${context.eventName}, only support pull_request and issue_comment events`
+    )
+    return
+  }
+
+  if (context.payload.pull_request == null) {
+    warning('Skipped: context.payload.pull_request is null')
+    return
+  }
+
+  const inputs: Inputs = new Inputs()
+  inputs.title = context.payload.pull_request.title
+  if (context.payload.pull_request.body != null) {
+    inputs.description = commenter.getDescription(
+      context.payload.pull_request.body
+    )
+  }
+
+  // if the description contains ignore_keyword, skip
+  if (inputs.description.includes(options.ignoreKeyword)) {
+    info('Skipped: description contains ignore_keyword')
+    return
+  }
+
+  inputs.systemMessage = options.systemMessage
+  inputs.reviewFileDiff = options.reviewFileDiff
+
+  // Fetch the full diff between the base commit and the latest commit of the PR branch
+  const fullDiff = await octokit.repos.compareCommits({
+    owner: repo.owner,
+    repo: repo.repo,
+    base: context.payload.pull_request.base.sha,
+    head: context.payload.pull_request.head.sha
+  })
+
+  const allFiles = fullDiff.data.files
+
+  if (allFiles == null) {
+    warning('Skipped: files data is missing')
+    return
+  }
+
+  // Filter to only requested files
+  const requestedFiles = allFiles.filter(file => 
+    files.includes(file.filename)
+  )
+
+  if (requestedFiles.length === 0) {
+    await commenter.comment(
+      `None of the requested files were found in this PR: ${files.join(', ')}`,
+      COMMENT_TAG,
+      'create'
+    )
+    return
+  }
+
+  // Apply path filters
+  const filteredFiles = requestedFiles.filter(file => options.checkPath(file.filename))
+
+  if (filteredFiles.length === 0) {
+    await commenter.comment(
+      `All requested files are excluded by path filters: ${files.join(', ')}`,
+      COMMENT_TAG,
+      'create'
+    )
+    return
+  }
+
+  await commenter.comment(
+    `Reviewing specific files: ${filteredFiles.map(f => f.filename).join(', ')}`,
+    COMMENT_TAG,
+    'create'
+  )
+
+  // TODO: Implement the actual review logic for specific files
+  // For now, just indicate that the feature is being implemented
+  await commenter.comment(
+    'File-specific review functionality is being implemented. This will review only the requested files.',
+    COMMENT_TAG,
+    'create'
+  )
+}
 
 export const codeReview = async (
   lightBot: Bot,
@@ -69,71 +172,27 @@ export const codeReview = async (
     SUMMARIZE_TAG,
     context.payload.pull_request.number
   )
-  let existingCommitIdsBlock = ''
   let existingSummarizeCmtBody = ''
   if (existingSummarizeCmt != null) {
     existingSummarizeCmtBody = existingSummarizeCmt.body
     inputs.rawSummary = commenter.getRawSummary(existingSummarizeCmtBody)
     inputs.shortSummary = commenter.getShortSummary(existingSummarizeCmtBody)
-    existingCommitIdsBlock = commenter.getReviewedCommitIdsBlock(
-      existingSummarizeCmtBody
-    )
   }
 
-  const allCommitIds = await commenter.getAllCommitIds()
-  // find highest reviewed commit id
-  let highestReviewedCommitId = ''
-  if (existingCommitIdsBlock !== '') {
-    highestReviewedCommitId = commenter.getHighestReviewedCommitId(
-      allCommitIds,
-      commenter.getReviewedCommitIds(existingCommitIdsBlock)
-    )
-  }
-
-  if (
-    highestReviewedCommitId === '' ||
-    highestReviewedCommitId === context.payload.pull_request.head.sha
-  ) {
-    info(
-      `Will review from the base commit: ${
-        context.payload.pull_request.base.sha as string
-      }`
-    )
-    highestReviewedCommitId = context.payload.pull_request.base.sha
-  } else {
-    info(`Will review from commit: ${highestReviewedCommitId}`)
-  }
-
-  // Fetch the diff between the highest reviewed commit and the latest commit of the PR branch
-  const incrementalDiff = await octokit.repos.compareCommits({
-    owner: repo.owner,
-    repo: repo.repo,
-    base: highestReviewedCommitId,
-    head: context.payload.pull_request.head.sha
-  })
-
-  // Fetch the diff between the target branch's base commit and the latest commit of the PR branch
-  const targetBranchDiff = await octokit.repos.compareCommits({
+  // Fetch the full diff between the base commit and the latest commit of the PR branch
+  const fullDiff = await octokit.repos.compareCommits({
     owner: repo.owner,
     repo: repo.repo,
     base: context.payload.pull_request.base.sha,
     head: context.payload.pull_request.head.sha
   })
 
-  const incrementalFiles = incrementalDiff.data.files
-  const targetBranchFiles = targetBranchDiff.data.files
+  const files = fullDiff.data.files
 
-  if (incrementalFiles == null || targetBranchFiles == null) {
+  if (files == null) {
     warning('Skipped: files data is missing')
     return
   }
-
-  // Filter out any file that is changed compared to the incremental changes
-  const files = targetBranchFiles.filter(targetBranchFile =>
-    incrementalFiles.some(
-      incrementalFile => incrementalFile.filename === targetBranchFile.filename
-    )
-  )
 
   if (files.length === 0) {
     warning('Skipped: files is null')
@@ -157,7 +216,7 @@ export const codeReview = async (
     return
   }
 
-  const commits = incrementalDiff.data.commits
+  const commits = fullDiff.data.commits
 
   if (commits.length === 0) {
     warning('Skipped: commits is null')
@@ -264,7 +323,7 @@ ${hunks.oldHunk}
 
   let statusMsg = `<details>
 <summary>Commits</summary>
-Files that changed from the base of the PR and between ${highestReviewedCommitId} and ${
+Files that changed from the base of the PR and ${
     context.payload.pull_request.head.sha
   } commits.
 </details>
@@ -742,11 +801,7 @@ ${
 
 </details>
 `
-    // add existing_comment_ids_block with latest head sha
-    summarizeComment += `\n${commenter.addReviewedCommitId(
-      existingCommitIdsBlock,
-      context.payload.pull_request.head.sha
-    )}`
+    // No need to track commit IDs since we always do full reviews
 
     // post the review
     await commenter.submitReview(

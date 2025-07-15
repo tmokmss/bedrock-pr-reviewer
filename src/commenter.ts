@@ -49,6 +49,26 @@ const SELF_LOGIN = 'github-actions[bot]'
 
 export class Commenter {
   /**
+   * Check if a comment contains a /reviewbot command
+   */
+  isCommandComment(commentBody: string): boolean {
+    return commentBody.includes('/reviewbot')
+  }
+
+  /**
+   * Extract command from comment body
+   */
+  extractCommand(commentBody: string): string | null {
+    const lines = commentBody.split('\n')
+    for (const line of lines) {
+      if (line.trim().startsWith('/reviewbot')) {
+        return line.trim()
+      }
+    }
+    return null
+  }
+
+  /**
    * @param mode Can be "create", "replace". Default is "replace".
    */
   async comment(message: string, tag: string, mode: string) {

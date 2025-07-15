@@ -285,6 +285,24 @@ const COMMIT_ID_END_TAG = '<!-- commit_ids_reviewed_end -->';
 const SELF_LOGIN = 'github-actions[bot]';
 class Commenter {
     /**
+     * Check if a comment contains a /reviewbot command
+     */
+    isCommandComment(commentBody) {
+        return commentBody.includes('/reviewbot');
+    }
+    /**
+     * Extract command from comment body
+     */
+    extractCommand(commentBody) {
+        const lines = commentBody.split('\n');
+        for (const line of lines) {
+            if (line.trim().startsWith('/reviewbot')) {
+                return line.trim();
+            }
+        }
+        return null;
+    }
+    /**
      * @param mode Can be "create", "replace". Default is "replace".
      */
     async comment(message, tag, mode) {
@@ -1032,16 +1050,19 @@ async function run() {
             (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.warning)(`Skipped: The user ${process.env.GITHUB_ACTOR} does not have collaborator access for the repository ${process.env.GITHUB_REPOSITORY}.`);
             return;
         }
-        // check if the event is pull_request
+        // check if the event is pull_request (only 'opened' action)
         if (process.env.GITHUB_EVENT_NAME === 'pull_request' ||
             process.env.GITHUB_EVENT_NAME === 'pull_request_target') {
             await (0,_review__WEBPACK_IMPORTED_MODULE_3__/* .codeReview */ .z)(lightBot, heavyBot, options, prompts);
+        }
+        else if (process.env.GITHUB_EVENT_NAME === 'issue_comment') {
+            await (0,_review_comment__WEBPACK_IMPORTED_MODULE_4__/* .handleCommand */ .M)(lightBot, heavyBot, options, prompts);
         }
         else if (process.env.GITHUB_EVENT_NAME === 'pull_request_review_comment') {
             await (0,_review_comment__WEBPACK_IMPORTED_MODULE_4__/* .handleReviewComment */ .V)(heavyBot, options, prompts);
         }
         else {
-            (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.warning)('Skipped: this action only works on push events or pull_request');
+            (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.warning)('Skipped: this action only works on pull_request, issue_comment, or pull_request_review_comment events');
         }
     }
     catch (e) {
@@ -3601,6 +3622,7 @@ $comment
 
 "use strict";
 /* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   "M": () => (/* binding */ handleCommand),
 /* harmony export */   "V": () => (/* binding */ handleReviewComment)
 /* harmony export */ });
 /* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(2186);
@@ -3608,11 +3630,13 @@ $comment
 /* harmony import */ var _actions_github__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(5438);
 /* harmony import */ var _actions_github__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__nccwpck_require__.n(_actions_github__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var _commenter__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(3339);
-/* harmony import */ var _inputs__WEBPACK_IMPORTED_MODULE_5__ = __nccwpck_require__(6180);
+/* harmony import */ var _inputs__WEBPACK_IMPORTED_MODULE_6__ = __nccwpck_require__(6180);
 /* harmony import */ var _octokit__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(4793);
 /* harmony import */ var _tokenizer__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(652);
+/* harmony import */ var _review__WEBPACK_IMPORTED_MODULE_5__ = __nccwpck_require__(2612);
 
 // eslint-disable-next-line camelcase
+
 
 
 
@@ -3622,9 +3646,31 @@ $comment
 const context = _actions_github__WEBPACK_IMPORTED_MODULE_1__.context;
 const repo = context.repo;
 const ASK_BOT = '/reviewbot';
+function parseCommand(commentBody) {
+    const lines = commentBody.split('\n');
+    for (const line of lines) {
+        if (line.trim().startsWith('/reviewbot')) {
+            const parts = line.trim().split(' ');
+            if (parts.length >= 2) {
+                if (parts[1] === 'review') {
+                    if (parts.length >= 3 && parts[2] === 'all') {
+                        return { type: 'review_all' };
+                    }
+                    else if (parts.length >= 3) {
+                        return { type: 'review_files', files: parts.slice(2) };
+                    }
+                }
+                else if (parts[1] === 'summarize') {
+                    return { type: 'summarize' };
+                }
+            }
+        }
+    }
+    return { type: 'unknown' };
+}
 const handleReviewComment = async (heavyBot, options, prompts) => {
     const commenter = new _commenter__WEBPACK_IMPORTED_MODULE_2__/* .Commenter */ .Es();
-    const inputs = new _inputs__WEBPACK_IMPORTED_MODULE_5__/* .Inputs */ .k();
+    const inputs = new _inputs__WEBPACK_IMPORTED_MODULE_6__/* .Inputs */ .k();
     if (context.eventName !== 'pull_request_review_comment') {
         (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.warning)(`Skipped: ${context.eventName} is not a pull_request_review_comment event`);
         return;
@@ -3743,6 +3789,59 @@ const handleReviewComment = async (heavyBot, options, prompts) => {
         (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.info)(`Skipped: ${context.eventName} event is from the bot itself`);
     }
 };
+const handleCommand = async (lightBot, heavyBot, options, prompts) => {
+    const commenter = new _commenter__WEBPACK_IMPORTED_MODULE_2__/* .Commenter */ .Es();
+    if (context.eventName !== 'issue_comment') {
+        (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.warning)(`Skipped: ${context.eventName} is not an issue_comment event`);
+        return;
+    }
+    if (!context.payload || !context.payload.comment) {
+        (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.warning)(`Skipped: ${context.eventName} event is missing comment payload`);
+        return;
+    }
+    const comment = context.payload.comment;
+    const commentBody = comment.body;
+    // Check if this is a pull request comment
+    if (!context.payload.issue || !context.payload.issue.pull_request) {
+        (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.warning)('Skipped: comment is not on a pull request');
+        return;
+    }
+    // Check if the comment contains /reviewbot command
+    if (!commentBody.includes('/reviewbot')) {
+        (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.info)('Skipped: comment does not contain /reviewbot command');
+        return;
+    }
+    const command = parseCommand(commentBody);
+    const pullNumber = context.payload.issue.number;
+    try {
+        switch (command.type) {
+            case 'review_all':
+                await commenter.comment('Starting full PR review as requested...', _commenter__WEBPACK_IMPORTED_MODULE_2__/* .COMMENT_TAG */ .Rs, 'create');
+                await (0,_review__WEBPACK_IMPORTED_MODULE_5__/* .codeReview */ .z)(lightBot, heavyBot, options, prompts);
+                break;
+            case 'review_files':
+                if (command.files && command.files.length > 0) {
+                    await (0,_review__WEBPACK_IMPORTED_MODULE_5__/* .reviewSpecificFiles */ .r)(command.files, lightBot, heavyBot, options, prompts);
+                }
+                else {
+                    await commenter.comment('Please specify files to review. Example: `/reviewbot review file1.ts file2.ts`', _commenter__WEBPACK_IMPORTED_MODULE_2__/* .COMMENT_TAG */ .Rs, 'create');
+                }
+                break;
+            case 'summarize':
+                await commenter.comment('Generating PR summary...', _commenter__WEBPACK_IMPORTED_MODULE_2__/* .COMMENT_TAG */ .Rs, 'create');
+                // TODO: Implement summarize-only function
+                (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.info)('Summary requested');
+                await commenter.comment('Summary-only feature is not yet implemented. Use `/reviewbot review all` for now.', _commenter__WEBPACK_IMPORTED_MODULE_2__/* .COMMENT_TAG */ .Rs, 'create');
+                break;
+            default:
+                await commenter.comment('Unknown command. Available commands:\n- `/reviewbot review all` - Full PR review\n- `/reviewbot review file1 file2` - Review specific files\n- `/reviewbot summarize` - Generate summary only', _commenter__WEBPACK_IMPORTED_MODULE_2__/* .COMMENT_TAG */ .Rs, 'create');
+        }
+    }
+    catch (error) {
+        (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.warning)(`Error handling command: ${error.message}`);
+        await commenter.comment(`Error processing command: ${error.message}`, _commenter__WEBPACK_IMPORTED_MODULE_2__/* .COMMENT_TAG */ .Rs, 'create');
+    }
+};
 
 
 /***/ }),
@@ -3754,7 +3853,8 @@ const handleReviewComment = async (heavyBot, options, prompts) => {
 
 // EXPORTS
 __nccwpck_require__.d(__webpack_exports__, {
-  "z": () => (/* binding */ codeReview)
+  "z": () => (/* binding */ codeReview),
+  "r": () => (/* binding */ reviewSpecificFiles)
 });
 
 // EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
@@ -3920,6 +4020,62 @@ var tokenizer = __nccwpck_require__(652);
 // eslint-disable-next-line camelcase
 const context = github.context;
 const repo = context.repo;
+const reviewSpecificFiles = async (files, lightBot, heavyBot, options, prompts) => {
+    // Similar to codeReview but filter to only specified files
+    const commenter = new lib_commenter/* Commenter */.Es();
+    const bedrockConcurrencyLimit = pLimit(options.bedrockConcurrencyLimit);
+    const githubConcurrencyLimit = pLimit(options.githubConcurrencyLimit);
+    if (context.eventName !== 'pull_request' &&
+        context.eventName !== 'pull_request_target' &&
+        context.eventName !== 'issue_comment') {
+        (0,core.warning)(`Skipped: current event is ${context.eventName}, only support pull_request and issue_comment events`);
+        return;
+    }
+    if (context.payload.pull_request == null) {
+        (0,core.warning)('Skipped: context.payload.pull_request is null');
+        return;
+    }
+    const inputs = new lib_inputs/* Inputs */.k();
+    inputs.title = context.payload.pull_request.title;
+    if (context.payload.pull_request.body != null) {
+        inputs.description = commenter.getDescription(context.payload.pull_request.body);
+    }
+    // if the description contains ignore_keyword, skip
+    if (inputs.description.includes(options.ignoreKeyword)) {
+        (0,core.info)('Skipped: description contains ignore_keyword');
+        return;
+    }
+    inputs.systemMessage = options.systemMessage;
+    inputs.reviewFileDiff = options.reviewFileDiff;
+    // Fetch the full diff between the base commit and the latest commit of the PR branch
+    const fullDiff = await octokit/* octokit.repos.compareCommits */.K.repos.compareCommits({
+        owner: repo.owner,
+        repo: repo.repo,
+        base: context.payload.pull_request.base.sha,
+        head: context.payload.pull_request.head.sha
+    });
+    const allFiles = fullDiff.data.files;
+    if (allFiles == null) {
+        (0,core.warning)('Skipped: files data is missing');
+        return;
+    }
+    // Filter to only requested files
+    const requestedFiles = allFiles.filter(file => files.includes(file.filename));
+    if (requestedFiles.length === 0) {
+        await commenter.comment(`None of the requested files were found in this PR: ${files.join(', ')}`, lib_commenter/* COMMENT_TAG */.Rs, 'create');
+        return;
+    }
+    // Apply path filters
+    const filteredFiles = requestedFiles.filter(file => options.checkPath(file.filename));
+    if (filteredFiles.length === 0) {
+        await commenter.comment(`All requested files are excluded by path filters: ${files.join(', ')}`, lib_commenter/* COMMENT_TAG */.Rs, 'create');
+        return;
+    }
+    await commenter.comment(`Reviewing specific files: ${filteredFiles.map(f => f.filename).join(', ')}`, lib_commenter/* COMMENT_TAG */.Rs, 'create');
+    // TODO: Implement the actual review logic for specific files
+    // For now, just indicate that the feature is being implemented
+    await commenter.comment('File-specific review functionality is being implemented. This will review only the requested files.', lib_commenter/* COMMENT_TAG */.Rs, 'create');
+};
 const codeReview = async (lightBot, heavyBot, options, prompts) => {
     const commenter = new lib_commenter/* Commenter */.Es();
     const bedrockConcurrencyLimit = pLimit(options.bedrockConcurrencyLimit);
@@ -3947,50 +4103,24 @@ const codeReview = async (lightBot, heavyBot, options, prompts) => {
     inputs.reviewFileDiff = options.reviewFileDiff;
     // get SUMMARIZE_TAG message
     const existingSummarizeCmt = await commenter.findCommentWithTag(lib_commenter/* SUMMARIZE_TAG */.Rp, context.payload.pull_request.number);
-    let existingCommitIdsBlock = '';
     let existingSummarizeCmtBody = '';
     if (existingSummarizeCmt != null) {
         existingSummarizeCmtBody = existingSummarizeCmt.body;
         inputs.rawSummary = commenter.getRawSummary(existingSummarizeCmtBody);
         inputs.shortSummary = commenter.getShortSummary(existingSummarizeCmtBody);
-        existingCommitIdsBlock = commenter.getReviewedCommitIdsBlock(existingSummarizeCmtBody);
     }
-    const allCommitIds = await commenter.getAllCommitIds();
-    // find highest reviewed commit id
-    let highestReviewedCommitId = '';
-    if (existingCommitIdsBlock !== '') {
-        highestReviewedCommitId = commenter.getHighestReviewedCommitId(allCommitIds, commenter.getReviewedCommitIds(existingCommitIdsBlock));
-    }
-    if (highestReviewedCommitId === '' ||
-        highestReviewedCommitId === context.payload.pull_request.head.sha) {
-        (0,core.info)(`Will review from the base commit: ${context.payload.pull_request.base.sha}`);
-        highestReviewedCommitId = context.payload.pull_request.base.sha;
-    }
-    else {
-        (0,core.info)(`Will review from commit: ${highestReviewedCommitId}`);
-    }
-    // Fetch the diff between the highest reviewed commit and the latest commit of the PR branch
-    const incrementalDiff = await octokit/* octokit.repos.compareCommits */.K.repos.compareCommits({
-        owner: repo.owner,
-        repo: repo.repo,
-        base: highestReviewedCommitId,
-        head: context.payload.pull_request.head.sha
-    });
-    // Fetch the diff between the target branch's base commit and the latest commit of the PR branch
-    const targetBranchDiff = await octokit/* octokit.repos.compareCommits */.K.repos.compareCommits({
+    // Fetch the full diff between the base commit and the latest commit of the PR branch
+    const fullDiff = await octokit/* octokit.repos.compareCommits */.K.repos.compareCommits({
         owner: repo.owner,
         repo: repo.repo,
         base: context.payload.pull_request.base.sha,
         head: context.payload.pull_request.head.sha
     });
-    const incrementalFiles = incrementalDiff.data.files;
-    const targetBranchFiles = targetBranchDiff.data.files;
-    if (incrementalFiles == null || targetBranchFiles == null) {
+    const files = fullDiff.data.files;
+    if (files == null) {
         (0,core.warning)('Skipped: files data is missing');
         return;
     }
-    // Filter out any file that is changed compared to the incremental changes
-    const files = targetBranchFiles.filter(targetBranchFile => incrementalFiles.some(incrementalFile => incrementalFile.filename === targetBranchFile.filename));
     if (files.length === 0) {
         (0,core.warning)('Skipped: files is null');
         return;
@@ -4011,7 +4141,7 @@ const codeReview = async (lightBot, heavyBot, options, prompts) => {
         (0,core.warning)('Skipped: filterSelectedFiles is null');
         return;
     }
-    const commits = incrementalDiff.data.commits;
+    const commits = fullDiff.data.commits;
     if (commits.length === 0) {
         (0,core.warning)('Skipped: commits is null');
         return;
@@ -4091,7 +4221,7 @@ ${hunks.oldHunk}
     }
     let statusMsg = `<details>
 <summary>Commits</summary>
-Files that changed from the base of the PR and between ${highestReviewedCommitId} and ${context.payload.pull_request.head.sha} commits.
+Files that changed from the base of the PR and ${context.payload.pull_request.head.sha} commits.
 </details>
 ${filesAndChanges.length > 0
         ? `
@@ -4457,8 +4587,7 @@ ${reviewsSkipped.length > 0
 
 </details>
 `;
-        // add existing_comment_ids_block with latest head sha
-        summarizeComment += `\n${commenter.addReviewedCommitId(existingCommitIdsBlock, context.payload.pull_request.head.sha)}`;
+        // No need to track commit IDs since we always do full reviews
         // post the review
         await commenter.submitReview(context.payload.pull_request.number, commits[commits.length - 1].sha, statusMsg);
     }

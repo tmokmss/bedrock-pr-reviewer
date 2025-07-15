@@ -2,9 +2,11 @@ name: 🔍 Claude Code Review (Automated)
 
 on:
   pull_request:
-  push:
+    types: [opened]  # Only when PR is created, NOT on pushes
+  issue_comment:
+    types: [created]  # For /reviewbot commands
   pull_request_review_comment:
-    types: [created]
+    types: [created]  # Keep existing comment replies
 
   workflow_dispatch:
     inputs:
