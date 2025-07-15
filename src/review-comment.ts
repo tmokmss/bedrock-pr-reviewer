@@ -220,6 +220,9 @@ export const handleCommand = async (
 ): Promise<void> => {
   const commenter: Commenter = new Commenter()
 
+  info(`handleCommand called with event: ${context.eventName}`)
+  info(`Payload keys: ${Object.keys(context.payload || {})}`)
+
   if (context.eventName !== 'issue_comment') {
     warning(`Skipped: ${context.eventName} is not an issue_comment event`)
     return
@@ -233,6 +236,9 @@ export const handleCommand = async (
   const comment = context.payload.comment
   const commentBody = comment.body
 
+  info(`Comment body: ${commentBody}`)
+  info(`Comment user: ${comment.user?.login}`)
+
   // Check if this is a pull request comment
   if (!context.payload.issue || !context.payload.issue.pull_request) {
     warning('Skipped: comment is not on a pull request')
@@ -242,6 +248,12 @@ export const handleCommand = async (
   // Check if the comment contains /reviewbot command
   if (!commentBody.includes('/reviewbot')) {
     info('Skipped: comment does not contain /reviewbot command')
+    return
+  }
+
+  // Check if the comment is from the bot itself (avoid infinite loops)
+  if (comment.user.login === 'github-actions[bot]') {
+    info('Skipped: comment is from the bot itself')
     return
   }
 
