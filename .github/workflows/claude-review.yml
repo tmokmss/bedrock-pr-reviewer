@@ -76,4 +76,4 @@ jobs:
           review_simple_changes: false
           review_comment_lgtm: false
           bedrock_light_model: arn:aws:bedrock:us-east-1:381491836522:inference-profile/us.anthropic.claude-3-5-haiku-20241022-v1:0
-          bedrock_heavy_model: arn:aws:bedrock:us-east-1:381491836522:inference-profile/us.anthropic.claude-3-5-haiku-20241022-v1:0
+          bedrock_heavy_model: arn:aws:bedrock:us-east-1:381491836522:inference-profile/us.anthropic.claude-3-5-sonnet-20241022-v2:0
